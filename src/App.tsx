@@ -1,5 +1,5 @@
 import './App.css'
-import {JSX} from "react";
+import type { JSX } from "react";
 
 interface Editor {
     doc:Doc,
