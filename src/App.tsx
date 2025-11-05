@@ -1,7 +1,8 @@
 import './App.css'
 import type {Editor} from "./types/Editor.ts";
 import {documentResolver} from "./Helpers/DocHelpers.tsx";
-import {JSX, useEffect} from "react";
+import {useEffect} from "react";
+import type {JSX} from "react";
 
 const editorDefault : Editor = {
     doc:{
