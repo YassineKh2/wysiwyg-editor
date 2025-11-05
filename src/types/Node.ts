@@ -1,5 +1,5 @@
-export interface Doc {
+export interface Node {
     type:"text"|"bold"|"image"|"parent",
     content:string | null,
-    children:Doc[] | null
+    children:Node[] | null
 }

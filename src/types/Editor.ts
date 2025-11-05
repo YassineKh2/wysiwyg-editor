@@ -1,7 +1,7 @@
-import type {Doc} from "./Doc.ts";
+import type {Node} from "./Node.ts";
 
 export interface Editor {
-    doc:Doc,
+    doc:Node,
     cursor : {
         x:number,
         y:number

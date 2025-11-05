@@ -1,8 +1,8 @@
-import type {Doc} from "../types/Doc.ts";
+import type {Node} from "../types/Node.ts";
 import {JSX} from "react";
 
 // Takes a document and returns the HTML Part
-export function parseDoc (doc: Doc) {
+export function parseDoc (doc: Node) {
     switch (doc.type){
         case "text":
             return <p>{doc.content}</p>
@@ -16,7 +16,7 @@ export function parseDoc (doc: Doc) {
 }
 
 // TODO Fix this it should not be returning nested arrays
-export function documentResolver (doc: Doc):JSX.Element[] {
+export function documentResolver (doc: Node):JSX.Element[] {
     if(!doc.children)
         return [parseDoc(doc)]
 

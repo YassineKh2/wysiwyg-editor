@@ -1,7 +1,7 @@
 import './App.css'
 import type {Editor} from "./types/Editor.ts";
-import {documentResolver} from "./Helpers/DocHelpers.tsx";
-import {useEffect} from "react";
+import {documentResolver} from "./Helpers/NodeHelpers.tsx";
+import {use, useEffect, useState} from "react";
 import type {JSX} from "react";
 
 const editorDefault : Editor = {
@@ -48,19 +48,22 @@ const editorDefault : Editor = {
 
 
 function handleMouseClick(x,y){
-    console.log(x, y)
+    const caret = document.caretPositionFromPoint(x,y)
+    console.log(caret)
 }
 
 
 function App() {
     const editor = editorDefault
     const result = documentResolver(editor.doc)
+    const [caret,setCaret] = useState({x: 0,y:0})
+
 
     useEffect(() => {
         document.addEventListener("click", (e:JSX) => {
-            console.log(e);
             const {clientX, clientY} = e
             handleMouseClick(clientX,clientY)
+            setCaret({x:clientX, y:clientY})
         });
 
         return removeEventListener("click",()=>{
