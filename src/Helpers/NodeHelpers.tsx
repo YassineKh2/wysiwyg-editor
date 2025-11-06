@@ -3,12 +3,13 @@ import {JSX} from "react";
 
 // Takes a document and returns the HTML Part
 export function parseDoc (doc: Node) {
+    const random = (Math.random()*5).toString()
     switch (doc.type){
         case "text":
-            return <p>{doc.content}</p>
+            return <p id={random}>{doc.content}</p>
 
         case "bold":
-            return <strong>{doc.content}</strong>
+            return <strong id={random}>{doc.content}</strong>
 
         case "image":
             return <img src={doc.content as string} alt={"image"}/>
