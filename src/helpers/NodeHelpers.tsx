@@ -3,13 +3,12 @@ import {JSX} from "react";
 
 // Takes a document and returns the HTML Part
 export function parseDoc (doc: Node) {
-    const random = (Math.random()*5).toString()
     switch (doc.type){
         case "text":
-            return <p id={random}>{doc.content}</p>
+            return <p id={doc.id}>{doc.content}</p>
 
         case "bold":
-            return <strong id={random}>{doc.content}</strong>
+            return <strong id={doc.id}>{doc.content}</strong>
 
         case "image":
             return <img src={doc.content as string} alt={"image"}/>
@@ -18,6 +17,8 @@ export function parseDoc (doc: Node) {
 
 // TODO Fix this it should not be returning nested arrays
 export function documentResolver (doc: Node):JSX.Element[] {
+    doc.id = Math.random().toString(36).substring(2, 15);
+
     if(!doc.children)
         return [parseDoc(doc)]
 
@@ -31,6 +32,15 @@ export function documentResolver (doc: Node):JSX.Element[] {
     return result
 }
 
-export function findNodeFromText(){
+export function findNodeFromText(doc:Node ,id: string, offset: number,res:Node[]){
+    if (!id) return;
+    if (doc.id === id) res.push(doc)
+
+
+    doc.children?.forEach(childDoc => {
+        findNodeFromText(childDoc,id,offset,res)
+    })
+
+    return res
 
 }
