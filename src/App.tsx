@@ -1,7 +1,8 @@
 import './App.css'
 import type {Editor} from "./types/Editor.ts";
-import {documentResolver, findNodeFromText} from "./helpers/NodeHelpers.tsx";
+import {addCharToNode, documentResolver, findNodeFromId} from "./helpers/NodeHelpers.tsx";
 import { useEffect, useState} from "react";
+import {useHotkeys} from "react-hotkeys-hook";
 
 const editorDefault : Editor = {
     doc:{
@@ -41,13 +42,14 @@ const editorDefault : Editor = {
     cursor:{
         x:0,
         y:0
-    }
+    },
+    currentNode:null
 }
 
 function App() {
     const [editor,setEditor] = useState(editorDefault)
     const [caret,setCaret] = useState({x: editor.cursor.x,y:editor.cursor.y})
-    const result = documentResolver(editor.doc)
+    useHotkeys('*', (key) => handleKeyPress(key))
 
     useEffect(() => {
         document.addEventListener("click", (e:MouseEvent) => {
@@ -64,10 +66,22 @@ function App() {
         const caret = document.caretPositionFromPoint(x,y)
         const nodeRect = caret.getClientRect()
         setCaret({x:nodeRect.x, y:nodeRect.y})
-        setEditor((prev)=>({...prev,cursor:{x:caret.offset,y:0}}))
+
+        const id = caret.offsetNode.parentElement.id
+        const results = findNodeFromId(editor.doc,id,[])
+        const node = results ? results[0] : null
+        setEditor((prev)=>({...prev,cursor:{x:caret.offset,y:0},currentNode:node}))
     }
 
+    function handleKeyPress(pressedKey:KeyboardEvent){
+        const key = pressedKey.key
+        if (!editor.currentNode) return
 
+        const node = addCharToNode(editor.currentNode, key, editor.cursor.x)
+        console.log(node)
+    }
+
+    const result = documentResolver(editor.doc)
     return (
     <div className="no-select cursor-text">
         <div id='caret' className='bg-black px-0 py-2.5 w-0.5 h-1 absolute' style={{ left: `${caret.x}px`, top: `${caret.y}px` }} />

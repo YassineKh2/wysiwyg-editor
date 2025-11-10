@@ -5,5 +5,6 @@ export interface Editor {
     cursor : {
         x:number,
         y:number
-    }
+    },
+    currentNode:Node|null
 }

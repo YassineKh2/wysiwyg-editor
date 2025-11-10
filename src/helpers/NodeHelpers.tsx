@@ -32,15 +32,34 @@ export function documentResolver (doc: Node):JSX.Element[] {
     return result
 }
 
-export function findNodeFromText(doc:Node ,id: string, offset: number,res:Node[]){
+export function findNodeFromId(doc:Node ,id: string,res:Node[]){
     if (!id) return;
     if (doc.id === id) res.push(doc)
 
-
     doc.children?.forEach(childDoc => {
-        findNodeFromText(childDoc,id,offset,res)
+        findNodeFromId(childDoc,id,res)
     })
 
     return res
+}
+export function addCharToNode(node:Node , char:string , pos: number){
+    const newNode = {...node}
+    const content = newNode.content;
+    const s1 = content?.slice(0,pos);
+    const s2 = content?.slice(pos,content?.length)
+    newNode.content = s1 + char + s2;
+    return newNode;
+}
 
+export function updateNode(doc:Node, oldNode:Node, newNode: Node){
+    if (doc.id === oldNode.id) {
+        doc = newNode
+        return
+    }
+
+    doc.children?.forEach(childDoc => {
+        updateNode(childDoc,oldNode,newNode)
+    })
+
+    return
 }
