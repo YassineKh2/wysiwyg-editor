@@ -1,6 +1,6 @@
 import './App.css'
 import type {Editor} from "./types/Editor.ts";
-import {addCharToNode, documentResolver, findNodeFromId} from "./helpers/NodeHelpers.tsx";
+import {addCharToNode, documentResolver, findNodeFromId, findNodeInDomFromId, updateNode} from "./helpers/NodeHelpers.tsx";
 import { useEffect, useState} from "react";
 import {useHotkeys} from "react-hotkeys-hook";
 
@@ -64,21 +64,42 @@ function App() {
 
     function handleMouseClick(x:number,y:number){
         const caret = document.caretPositionFromPoint(x,y)
-        const nodeRect = caret.getClientRect()
+        const nodeRect = caret?.getClientRect() || {x:0,y:0}
         setCaret({x:nodeRect.x, y:nodeRect.y})
 
-        const id = caret.offsetNode.parentElement.id
-        const results = findNodeFromId(editor.doc,id,[])
+        const id = caret?.offsetNode.parentElement?.id
+        const results = findNodeFromId(editor.doc,[],id)
         const node = results ? results[0] : null
-        setEditor((prev)=>({...prev,cursor:{x:caret.offset,y:0},currentNode:node}))
+        setEditor((prev)=>({
+            ...prev,
+            cursor:{x:caret?.offset || 0,y:0},
+            currentNode:node
+        }))
     }
 
     function handleKeyPress(pressedKey:KeyboardEvent){
         const key = pressedKey.key
-        if (!editor.currentNode) return
+        const {cursor,doc,currentNode} = editor;
 
-        const node = addCharToNode(editor.currentNode, key, editor.cursor.x)
-        console.log(node)
+        if (!currentNode) return
+
+        const newNode = addCharToNode(currentNode, key, cursor.x)
+        const newDoc = updateNode(doc, newNode, currentNode)
+
+        setEditor((prev)=>({
+        ...prev,
+        doc:newDoc,
+        cursor:{x:cursor.x + 1,y:cursor.y},
+        currentNode:newNode
+        }))
+
+        const span = document.createElement('span');
+        span.innerHTML = key;
+        document.body.appendChild(span);
+        const width = caret.x + span.offsetWidth;
+        document.body.removeChild(span);
+
+        setCaret((prev)=>({...prev,x:width}))
     }
 
     const result = documentResolver(editor.doc)

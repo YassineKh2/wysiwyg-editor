@@ -1,5 +1,5 @@
 import type {Node} from "../types/Node.ts";
-import {JSX} from "react";
+import type {JSX} from "react";
 
 // Takes a document and returns the HTML Part
 export function parseDoc (doc: Node) {
@@ -32,18 +32,18 @@ export function documentResolver (doc: Node):JSX.Element[] {
     return result
 }
 
-export function findNodeFromId(doc:Node ,id: string,res:Node[]){
+export function findNodeFromId(doc:Node,res:Node[] ,id?: string){
     if (!id) return;
     if (doc.id === id) res.push(doc)
 
     doc.children?.forEach(childDoc => {
-        findNodeFromId(childDoc,id,res)
+        findNodeFromId(childDoc,res,id)
     })
 
     return res
 }
 export function addCharToNode(node:Node , char:string , pos: number){
-    const newNode = {...node}
+    const newNode = node
     const content = newNode.content;
     const s1 = content?.slice(0,pos);
     const s2 = content?.slice(pos,content?.length)
@@ -54,12 +54,17 @@ export function addCharToNode(node:Node , char:string , pos: number){
 export function updateNode(doc:Node, oldNode:Node, newNode: Node){
     if (doc.id === oldNode.id) {
         doc = newNode
-        return
     }
 
     doc.children?.forEach(childDoc => {
         updateNode(childDoc,oldNode,newNode)
     })
 
-    return
+    return doc
+}
+
+export function findNodeInDomFromId(id?:string){
+    if(!id) return null;
+
+    return document.getElementById(id)
 }
