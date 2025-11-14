@@ -81,25 +81,26 @@ function App() {
         const key = pressedKey.key
         const {cursor,doc,currentNode} = editor;
 
+        const oldNode = {...currentNode}
+        const n = findNodeInDomFromId(oldNode?.id)
+
         if (!currentNode) return
 
         const newNode = addCharToNode(currentNode, key, cursor.x)
-        const newDoc = updateNode(doc, newNode, currentNode)
+        const newDoc = updateNode(doc, newNode, currentNode,[])
+        console.log(newDoc)
 
-        setEditor((prev)=>({
-        ...prev,
-        doc:newDoc,
-        cursor:{x:cursor.x + 1,y:cursor.y},
-        currentNode:newNode
-        }))
+        // setEditor((prev)=>({
+        // ...prev,
+        // doc:newDoc,
+        // cursor:{x:cursor.x + 1,y:cursor.y},
+        // currentNode:newNode
+        // }))
 
-        const span = document.createElement('span');
-        span.innerHTML = key;
-        document.body.appendChild(span);
-        const width = caret.x + span.offsetWidth;
-        document.body.removeChild(span);
-
-        setCaret((prev)=>({...prev,x:width}))
+        const b = findNodeInDomFromId(newNode?.id)
+        // console.log(newNode)
+        
+        // setCaret((prev)=>({...prev,x:width}))
     }
 
     const result = documentResolver(editor.doc)

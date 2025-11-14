@@ -43,7 +43,9 @@ export function findNodeFromId(doc:Node,res:Node[] ,id?: string){
     return res
 }
 export function addCharToNode(node:Node , char:string , pos: number){
-    const newNode = node
+    const newId = Math.random().toString(36).substring(2, 15);
+    const newNode = {...node,id:newId}
+
     const content = newNode.content;
     const s1 = content?.slice(0,pos);
     const s2 = content?.slice(pos,content?.length)
@@ -51,16 +53,17 @@ export function addCharToNode(node:Node , char:string , pos: number){
     return newNode;
 }
 
-export function updateNode(doc:Node, oldNode:Node, newNode: Node){
+export function updateNode(doc:Node, oldNode:Node, newNode: Node,res:Node[]){
+    res.push(doc)
     if (doc.id === oldNode.id) {
         doc = newNode
     }
 
     doc.children?.forEach(childDoc => {
-        updateNode(childDoc,oldNode,newNode)
+        updateNode(childDoc,oldNode,newNode,res)
     })
 
-    return doc
+    return res
 }
 
 export function findNodeInDomFromId(id?:string){
