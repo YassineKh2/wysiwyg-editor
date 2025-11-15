@@ -44,7 +44,8 @@ export function findNodeFromId(doc:Node,res:Node[] ,id?: string){
 }
 export function addCharToNode(node:Node , char:string , pos: number){
     const newId = Math.random().toString(36).substring(2, 15);
-    const newNode = {...node,id:newId}
+    const newNode = structuredClone(node);
+    newNode.id = newId;
 
     const content = newNode.content;
     const s1 = content?.slice(0,pos);
@@ -53,17 +54,17 @@ export function addCharToNode(node:Node , char:string , pos: number){
     return newNode;
 }
 
-export function updateNode(doc:Node, oldNode:Node, newNode: Node,res:Node[]){
-    res.push(doc)
+export function updateNode(doc:Node, oldNode:Node, newNode: Node){
     if (doc.id === oldNode.id) {
-        doc = newNode
+        return newNode
+    }
+    if (!doc.children?.length) return doc
+
+    for(let i = 0 ; i < doc.children?.length ; i++){
+        doc.children[i] = updateNode(doc.children[i], oldNode, newNode)
     }
 
-    doc.children?.forEach(childDoc => {
-        updateNode(childDoc,oldNode,newNode,res)
-    })
-
-    return res
+    return doc
 }
 
 export function findNodeInDomFromId(id?:string){
