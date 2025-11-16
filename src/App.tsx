@@ -76,6 +76,7 @@ function App() {
         const id = caret?.offsetNode.parentElement?.id
         const results = findNodeFromId(editor.doc,[],id)
         const node = results ? results[0] : null
+
         setEditor((prev)=>({
             ...prev,
             cursor:{x:caret?.offset || 0,y:0},
@@ -88,11 +89,6 @@ function App() {
         const {cursor,doc,currentNode} = editor;
 
         if(!currentNode) return;
-
-        const oldNode = structuredClone(currentNode)
-        const n = findNodeInDomFromId(oldNode?.id)
-
-        if (!currentNode) return
 
         const docCopy = structuredClone(doc)
 
@@ -107,17 +103,12 @@ function App() {
         currentNode:newNode
         }))
 
-        const b = findNodeInDomFromId(newNode?.id)
-        console.log(n, b)
+        const result = documentResolver(newDoc,true)
+        setEditorResult(result)
+
 
         // setCaret((prev)=>({...prev,x:width}))
     }
-
-    useEffect(()=>{
-        const result = documentResolver(editor.doc)
-        setEditorResult(result)
-    },[editor])
-
 
     return (
     <div className="no-select cursor-text">

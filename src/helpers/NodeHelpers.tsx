@@ -16,7 +16,8 @@ export function parseDoc (doc: Node) {
 }
 
 // TODO Fix this it should not be returning nested arrays
-export function documentResolver (doc: Node):JSX.Element[] {
+export function documentResolver (doc: Node, keepId?:boolean):JSX.Element[] {
+    if (!keepId)
     doc.id = Math.random().toString(36).substring(2, 15);
 
     if(!doc.children)
@@ -24,7 +25,7 @@ export function documentResolver (doc: Node):JSX.Element[] {
 
     const result:JSX.Element[] = []
     doc.children.forEach(childDoc => {
-        result.push(documentResolver(childDoc) as JSX.Element)
+        result.push(documentResolver(childDoc,keepId) as JSX.Element)
     })
 
     result.push(parseDoc(doc))
@@ -33,6 +34,7 @@ export function documentResolver (doc: Node):JSX.Element[] {
 }
 
 export function findNodeFromId(doc:Node,res:Node[] ,id?: string){
+    console.log(doc,id)
     if (!id) return;
     if (doc.id === id) res.push(doc)
 
