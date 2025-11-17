@@ -12,6 +12,9 @@ export function parseDoc (doc: Node) {
 
         case "image":
             return <img src={doc.content as string} alt={"image"}/>
+            
+        default:
+            return <div id={doc.id}></div>
     }
 }
 
@@ -34,7 +37,6 @@ export function documentResolver (doc: Node, keepId?:boolean):JSX.Element[] {
 }
 
 export function findNodeFromId(doc:Node,res:Node[] ,id?: string){
-    console.log(doc,id)
     if (!id) return;
     if (doc.id === id) res.push(doc)
 

@@ -1,7 +1,7 @@
 import './App.css'
 import type {Editor} from "./types/Editor.ts";
 import {addCharToNode, documentResolver, findNodeFromId, findNodeInDomFromId, updateNode} from "./helpers/NodeHelpers.tsx";
-import { useEffect, useState} from "react";
+import { Fragment, useEffect, useRef, useState} from "react";
 import type { JSX } from "react";
 import {useHotkeys} from "react-hotkeys-hook";
 
@@ -51,11 +51,12 @@ function App() {
     const [editor,setEditor] = useState(editorDefault)
     const [editorResult,setEditorResult] = useState<null | JSX.Element[] >(null)
     const [caret,setCaret] = useState({x: editor.cursor.x,y:editor.cursor.y})
+    const editorRef = useRef(editor);
+
     useHotkeys('*', (key) => handleKeyPress(key))
 
-    useEffect(() => {
-
-        const result = documentResolver(editor.doc)
+    useEffect(() => { 
+        const result = documentResolver(editor.doc).flat(Infinity)
         setEditorResult(result)
 
         document.addEventListener("click", (e:MouseEvent) => {
@@ -64,9 +65,14 @@ function App() {
         });
 
         return removeEventListener("click",()=>{
-            console.log("removed event");
+            console.warn("removed event");
         })
     }, []);
+
+    useEffect(() => {
+        editorRef.current = editor;
+    }, [editor]);
+    
 
     function handleMouseClick(x:number,y:number){
         const caret = document.caretPositionFromPoint(x,y)
@@ -74,7 +80,7 @@ function App() {
         setCaret({x:nodeRect.x, y:nodeRect.y})
 
         const id = caret?.offsetNode.parentElement?.id
-        const results = findNodeFromId(editor.doc,[],id)
+        const results = findNodeFromId(editorRef.current.doc,[],id)
         const node = results ? results[0] : null
 
         setEditor((prev)=>({
@@ -91,10 +97,9 @@ function App() {
         if(!currentNode) return;
 
         const docCopy = structuredClone(doc)
-
+        
         const newNode = addCharToNode(currentNode, key, cursor.x)
         const newDoc = updateNode(docCopy, currentNode,newNode)
-        console.log(newDoc)
 
         setEditor((prev)=>({
         ...prev,
@@ -103,17 +108,35 @@ function App() {
         currentNode:newNode
         }))
 
-        const result = documentResolver(newDoc,true)
+        const result = documentResolver(newDoc,true).flat(Infinity)
         setEditorResult(result)
+
+        
+        const newDomNode = findNodeInDomFromId(newNode.id)
+
+        if(!newDomNode){
+            console.error("New node not found !")
+            return 
+        }
+
+        const range = document.createRange()
+        // range.setStart(newDomNode,0)
+        // range.setEnd(newDomNode,cursor.x +1)
+        console.log(range)
 
 
         // setCaret((prev)=>({...prev,x:width}))
     }
 
+
     return (
     <div className="no-select cursor-text">
         <div id='caret' className='bg-black px-0 py-2.5 w-0.5 h-1 absolute' style={{ left: `${caret.x}px`, top: `${caret.y}px` }} />
-        {editorResult}
+        {editorResult?.map((Element,index) => (
+            <Fragment key={index}>
+                {Element}
+            </Fragment>
+        ))}
     </div>
     )
 }
