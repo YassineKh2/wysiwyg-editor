@@ -47,15 +47,11 @@ export function findNodeFromId(doc:Node,res:Node[] ,id?: string){
     return res
 }
 export function addCharToNode(node:Node , char:string , pos: number){
-    const newId = Math.random().toString(36).substring(2, 15);
-    const newNode = structuredClone(node);
-    newNode.id = newId;
-
-    const content = newNode.content;
+    const content = node.content;
     const s1 = content?.slice(0,pos);
     const s2 = content?.slice(pos,content?.length)
-    newNode.content = s1 + char + s2;
-    return newNode;
+    node.content = s1 + char + s2;
+    return node;
 }
 
 export function updateNode(doc:Node, oldNode:Node, newNode: Node){

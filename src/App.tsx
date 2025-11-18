@@ -97,8 +97,12 @@ function App() {
         if(!currentNode) return;
 
         const docCopy = structuredClone(doc)
+
+        const newId = Math.random().toString(36).substring(2, 15);
+        const currentNodeCopy = structuredClone(currentNode);
+        currentNodeCopy.id = newId;
         
-        const newNode = addCharToNode(currentNode, key, cursor.x)
+        const newNode = addCharToNode(currentNodeCopy, key, cursor.x)
         const newDoc = updateNode(docCopy, currentNode,newNode)
 
         setEditor((prev)=>({
@@ -112,18 +116,19 @@ function App() {
         setEditorResult(result)
 
         
-        const newDomNode = findNodeInDomFromId(newNode.id)
+        const domNode = findNodeInDomFromId(currentNode.id)
+        const previousDomNode = domNode?.previousElementSibling
 
-        if(!newDomNode){
-            console.error("New node not found !")
+        if(!domNode || !previousDomNode){
+            console.error("Node not found !")
             return 
         }
 
         const range = document.createRange()
-        // range.setStart(newDomNode,0)
-        // range.setEnd(newDomNode,cursor.x +1)
-        console.log(range)
+        range.setStart(domNode,1)
+        range.setEnd(domNode, 2)
 
+        console.log(range)
 
         // setCaret((prev)=>({...prev,x:width}))
     }
