@@ -4,6 +4,7 @@ import {addCharToNode, documentResolver, findNodeFromId, findNodeInDomFromId, up
 import { Fragment, useEffect, useRef, useState} from "react";
 import type { JSX } from "react";
 import {useHotkeys} from "react-hotkeys-hook";
+import {Keys} from "./types/Keys.ts";
 
 const editorDefault : Editor = {
     doc:{
@@ -64,12 +65,12 @@ function App() {
         endNode : null,
         visibile:false
     })
-    
+
     const editorRef = useRef(editor);
 
     useHotkeys('*', (key) => handleKeyPress(key))
 
-    useEffect(() => { 
+    useEffect(() => {
         const result = documentResolver(editor.doc).flat(Infinity)
         setEditorView(result)
 
@@ -93,7 +94,7 @@ function App() {
     useEffect(() => {
         editorRef.current = editor;
     }, [editor]);
-    
+
 
     function handleMouseClick(x:number,y:number){
         const caret = document.caretPositionFromPoint(x,y)
@@ -112,7 +113,33 @@ function App() {
     }
 
     function handleKeyPress(pressedKey:KeyboardEvent){
-        const key = pressedKey.key
+        const {key} = pressedKey
+
+        switch (key){
+            case Keys.ArrowLeft: {
+                setEditor((prev)=>({
+                    ...prev,
+                    cursor:{x:prev.cursor.x - 1,y:prev.cursor.y},
+                }))
+                break
+            }
+            case Keys.ArrowRight: {
+                setEditor((prev)=>({
+                    ...prev,
+                    cursor:{x:prev.cursor.x + 1,y:prev.cursor.y},
+                }))
+                break
+            }
+
+            default:addCharacter(key)
+
+        }
+
+
+    }
+
+
+    function addCharacter(char:string){
         const {cursor,doc,currentNode} = editor;
 
         if(!currentNode) return;
@@ -122,36 +149,37 @@ function App() {
         const newId = Math.random().toString(36).substring(2, 15);
         const currentNodeCopy = structuredClone(currentNode);
         currentNodeCopy.id = newId;
-        
-        const newNode = addCharToNode(currentNodeCopy, key, cursor.x)
-        const newDoc = updateNode(docCopy, currentNode,newNode) 
+
+        const newNode = addCharToNode(currentNodeCopy, char, cursor.x)
+        const newDoc = updateNode(docCopy, currentNode,newNode)
 
         setEditor((prev)=>({
-        ...prev,
-        doc:newDoc,
-        cursor:{x:cursor.x + 1,y:cursor.y},
-        currentNode:newNode
+            ...prev,
+            doc:newDoc,
+            cursor:{x:cursor.x + 1,y:cursor.y},
+            currentNode:newNode
         }))
 
         const result = documentResolver(newDoc,true).flat(Infinity)
         setEditorView(result)
 
-        
+
         const domNode = findNodeInDomFromId(currentNode.id)
         const previousDomNode = domNode?.previousElementSibling
 
         if(!domNode || !previousDomNode){
             console.error("Node not found !")
-            return 
+            return
         }
 
-        const range = document.createRange()
-        range.setStart(domNode,0)
+        // const range = document.createRange()
+        // range.setStart(domNode,1)
         // range.setEnd(domNode, 2)
 
-        console.log(range)
+        const charWidth = getCharWidth(char)
+        console.log(charWidth)
+        setCaret((prev)=>({...prev,x:prev.x + charWidth}))
 
-        // setCaret((prev)=>({...prev,x:width}))
     }
 
     function handleSelection(e:MouseEvent){
@@ -160,7 +188,18 @@ function App() {
             startNode:e.target,
             visibile:true
         }))
-    } 
+    }
+
+
+    const getCharWidth = (char:string) => {
+        const span = document.createElement('span');
+        span.innerHTML = char;
+        document.body.appendChild(span);
+        const width = span.offsetWidth;
+        document.body.removeChild(span);
+        return width + 1
+    }
+
 
 
     return (
