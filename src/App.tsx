@@ -47,21 +47,42 @@ const editorDefault : Editor = {
     currentNode:null
 }
 
+
+interface selectionType {
+    startNode : EventTarget | null,
+    endNode : EventTarget | null,
+    visibile:boolean
+}
+
+
 function App() {
     const [editor,setEditor] = useState(editorDefault)
-    const [editorResult,setEditorResult] = useState<null | JSX.Element[] >(null)
+    const [editorView,setEditorView] = useState<null | JSX.Element[] >(null)
     const [caret,setCaret] = useState({x: editor.cursor.x,y:editor.cursor.y})
+    const [selection,setSelection] = useState<selectionType>({
+        startNode : null,
+        endNode : null,
+        visibile:false
+    })
+    
     const editorRef = useRef(editor);
 
     useHotkeys('*', (key) => handleKeyPress(key))
 
     useEffect(() => { 
         const result = documentResolver(editor.doc).flat(Infinity)
-        setEditorResult(result)
+        setEditorView(result)
 
-        document.addEventListener("click", (e:MouseEvent) => {
+         document.addEventListener("mousedown", (e:MouseEvent) => {
             const {clientX, clientY} = e
             handleMouseClick(clientX,clientY)
+            handleSelection(e)
+        });
+        //  document.addEventListener("mousemove", (e:MouseEvent) => {
+        //     console.log(e)
+        // });
+         document.addEventListener("mouseup", (e:MouseEvent) => {
+            console.log(e)
         });
 
         return removeEventListener("click",()=>{
@@ -103,7 +124,7 @@ function App() {
         currentNodeCopy.id = newId;
         
         const newNode = addCharToNode(currentNodeCopy, key, cursor.x)
-        const newDoc = updateNode(docCopy, currentNode,newNode)
+        const newDoc = updateNode(docCopy, currentNode,newNode) 
 
         setEditor((prev)=>({
         ...prev,
@@ -113,7 +134,7 @@ function App() {
         }))
 
         const result = documentResolver(newDoc,true).flat(Infinity)
-        setEditorResult(result)
+        setEditorView(result)
 
         
         const domNode = findNodeInDomFromId(currentNode.id)
@@ -125,19 +146,32 @@ function App() {
         }
 
         const range = document.createRange()
-        range.setStart(domNode,1)
-        range.setEnd(domNode, 2)
+        range.setStart(domNode,0)
+        // range.setEnd(domNode, 2)
 
         console.log(range)
 
         // setCaret((prev)=>({...prev,x:width}))
     }
 
+    function handleSelection(e:MouseEvent){
+        setSelection((prev)=>({
+            ...prev,
+            startNode:e.target,
+            visibile:true
+        }))
+    } 
+
 
     return (
     <div className="no-select cursor-text">
         <div id='caret' className='bg-black px-0 py-2.5 w-0.5 h-1 absolute' style={{ left: `${caret.x}px`, top: `${caret.y}px` }} />
-        {editorResult?.map((Element,index) => (
+        <div id='selection' className="absolute bg-blue-400/50 rounded -z-50" style={{
+            visibility: selection.visibile ?'visible' : 'hidden',
+            width:300,
+            height:300
+        }}/>
+        {editorView?.map((Element,index) => (
             <Fragment key={index}>
                 {Element}
             </Fragment>
