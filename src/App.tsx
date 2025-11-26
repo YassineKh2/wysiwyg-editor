@@ -130,6 +130,29 @@ function App() {
                 }))
                 break
             }
+            case Keys.ArrowUp:
+            case Keys.ArrowDown:
+            case Keys.Enter:
+            case Keys.Escape:
+            case Keys.Space:
+            case Keys.Backspace:
+            case Keys.Tab:
+            case Keys.Delete:
+            case Keys.Shift:
+            case Keys.Control:
+            case Keys.Alt:
+            case Keys.Meta:
+            case Keys.CapsLock:
+            case Keys.PageUp:
+            case Keys.PageDown:
+            case Keys.End:
+            case Keys.Home:
+            case Keys.Insert:
+            case Keys.NumLock:
+            case Keys.ScrollLock:
+            break;
+
+
 
             default:addCharacter(key)
 
@@ -183,11 +206,11 @@ function App() {
     }
 
     function handleSelection(e:MouseEvent){
-        setSelection((prev)=>({
-            ...prev,
-            startNode:e.target,
-            visibile:true
-        }))
+        // setSelection((prev)=>({
+        //     ...prev,
+        //     startNode:e.target,
+        //     visibile:true
+        // }))
     }
 
 
@@ -195,9 +218,9 @@ function App() {
         const span = document.createElement('span');
         span.innerHTML = char;
         document.body.appendChild(span);
-        const width = span.offsetWidth;
+        const boundingClientRect = span.getBoundingClientRect();
         document.body.removeChild(span);
-        return width + 1
+        return boundingClientRect.width
     }
 
 
