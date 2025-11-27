@@ -219,8 +219,8 @@ function App() {
         setEditorView(result)
 
         const char = currentNode.content ? currentNode.content[cursor.x - 1] : ''
-        
-        
+
+
         const charWidth = getCharWidth(char)
         console.log(char)
         setCaret((prev)=>({...prev,x:prev.x - charWidth}))
@@ -240,7 +240,7 @@ function App() {
         // Replace spaces by their HTML Code
 
         char = char === Keys.Space ? "&nbsp;" : char
-        
+
         const span = document.createElement('span');
         span.innerHTML = char;
         document.body.appendChild(span);
@@ -252,7 +252,7 @@ function App() {
 
 
     return (
-    <div className="no-select cursor-text">
+    <div className="no-select cursor-text editor">
         <div id='caret' className='bg-black px-0 py-2.5 w-0.5 h-1 absolute' style={{ left: `${caret.x}px`, top: `${caret.y}px` }} />
         <div id='selection' className="absolute bg-blue-400/50 rounded -z-50" style={{
             visibility: selection.visibile ?'visible' : 'hidden',
