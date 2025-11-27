@@ -48,9 +48,18 @@ export function findNodeFromId(doc:Node,res:Node[] ,id?: string){
 }
 export function addCharToNode(node:Node , char:string , pos: number){
     const content = node.content;
-    const s1 = content?.slice(0,pos);
-    const s2 = content?.slice(pos,content?.length)
-    node.content = s1 + char + s2;
+    const s1 = content?.slice(0,pos) || "";
+    const s2 = content?.slice(pos,content?.length) || ""
+    node.content = s1?.concat(char,s2)
+    return node;
+}
+
+export function removeCharFromNode(node:Node , pos: number){
+    const content = node.content;
+    const position = pos - 1 > 0 ? pos - 1 : 0
+    const s1 = content?.slice(0,position) || '';
+    const s2 = content?.slice(pos,content?.length) || ''
+    node.content = s1 + s2;
     return node;
 }
 

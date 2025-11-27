@@ -1,6 +1,6 @@
 import './App.css'
 import type {Editor} from "./types/Editor.ts";
-import {addCharToNode, documentResolver, findNodeFromId, findNodeInDomFromId, updateNode} from "./helpers/NodeHelpers.tsx";
+import {addCharToNode, documentResolver, findNodeFromId, findNodeInDomFromId, removeCharFromNode, updateNode} from "./helpers/NodeHelpers.tsx";
 import { Fragment, useEffect, useRef, useState} from "react";
 import type { JSX } from "react";
 import {useHotkeys} from "react-hotkeys-hook";
@@ -134,8 +134,10 @@ function App() {
             case Keys.ArrowDown:
             case Keys.Enter:
             case Keys.Escape:
-            case Keys.Space:
-            case Keys.Backspace:
+            case Keys.Backspace:{
+                removeCharacter()
+                break;
+            }
             case Keys.Tab:
             case Keys.Delete:
             case Keys.Shift:
@@ -187,21 +189,41 @@ function App() {
         setEditorView(result)
 
 
-        const domNode = findNodeInDomFromId(currentNode.id)
-        const previousDomNode = domNode?.previousElementSibling
-
-        if(!domNode || !previousDomNode){
-            console.error("Node not found !")
-            return
-        }
-
-        // const range = document.createRange()
-        // range.setStart(domNode,1)
-        // range.setEnd(domNode, 2)
-
         const charWidth = getCharWidth(char)
-        console.log(charWidth)
         setCaret((prev)=>({...prev,x:prev.x + charWidth}))
+
+    }
+
+     function removeCharacter(){
+        const {cursor,doc,currentNode} = editor;
+
+        if(!currentNode) return;
+
+        const docCopy = structuredClone(doc)
+
+        const newId = Math.random().toString(36).substring(2, 15);
+        const currentNodeCopy = structuredClone(currentNode);
+        currentNodeCopy.id = newId;
+
+        const newNode = removeCharFromNode(currentNodeCopy, cursor.x)
+        const newDoc = updateNode(docCopy, currentNode,newNode)
+
+        setEditor((prev)=>({
+            ...prev,
+            doc:newDoc,
+            cursor:{x:cursor.x - 1,y:cursor.y},
+            currentNode:newNode
+        }))
+
+        const result = documentResolver(newDoc,true).flat(Infinity)
+        setEditorView(result)
+
+        const char = currentNode.content ? currentNode.content[cursor.x - 1] : ''
+        
+        
+        const charWidth = getCharWidth(char)
+        console.log(char)
+        setCaret((prev)=>({...prev,x:prev.x - charWidth}))
 
     }
 
@@ -215,6 +237,10 @@ function App() {
 
 
     const getCharWidth = (char:string) => {
+        // Replace spaces by their HTML Code
+
+        char = char === Keys.Space ? "&nbsp;" : char
+        
         const span = document.createElement('span');
         span.innerHTML = char;
         document.body.appendChild(span);
