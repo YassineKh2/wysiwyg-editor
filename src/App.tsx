@@ -1,8 +1,15 @@
 import './App.css'
 import type {Editor} from "./types/Editor.ts";
-import {addCharToNode, documentResolver, findNodeFromId, findNodeInDomFromId, removeCharFromNode, updateNode} from "./helpers/NodeHelpers.tsx";
-import { Fragment, useEffect, useRef, useState} from "react";
-import type { JSX } from "react";
+import {Direction} from "./types/Editor.ts";
+import {
+    addCharToNode,
+    documentResolver,
+    findNodeFromId,
+    removeCharFromNode,
+    updateNode
+} from "./helpers/NodeHelpers.tsx";
+import type {JSX} from "react";
+import {Fragment, useEffect, useRef, useState} from "react";
 import {useHotkeys} from "react-hotkeys-hook";
 import {Keys} from "./types/Keys.ts";
 
@@ -52,7 +59,7 @@ const editorDefault : Editor = {
 interface selectionType {
     startNode : EventTarget | null,
     endNode : EventTarget | null,
-    visibile:boolean
+    visible:boolean
 }
 
 
@@ -63,7 +70,7 @@ function App() {
     const [selection,setSelection] = useState<selectionType>({
         startNode : null,
         endNode : null,
-        visibile:false
+        visible:false
     })
 
     const editorRef = useRef(editor);
@@ -117,17 +124,11 @@ function App() {
 
         switch (key){
             case Keys.ArrowLeft: {
-                setEditor((prev)=>({
-                    ...prev,
-                    cursor:{x:prev.cursor.x - 1,y:prev.cursor.y},
-                }))
+                moveWithArrowCursor(Direction.left)
                 break
             }
             case Keys.ArrowRight: {
-                setEditor((prev)=>({
-                    ...prev,
-                    cursor:{x:prev.cursor.x + 1,y:prev.cursor.y},
-                }))
+                moveWithArrowCursor(Direction.right)
                 break
             }
             case Keys.ArrowUp:
@@ -189,9 +190,7 @@ function App() {
         setEditorView(result)
 
 
-        const charWidth = getCharWidth(char)
-        setCaret((prev)=>({...prev,x:prev.x + charWidth}))
-
+        moveCaret(char,Direction.right)
     }
 
      function removeCharacter(){
@@ -220,10 +219,7 @@ function App() {
 
         const char = currentNode.content ? currentNode.content[cursor.x - 1] : ''
 
-
-        const charWidth = getCharWidth(char)
-        console.log(char)
-        setCaret((prev)=>({...prev,x:prev.x - charWidth}))
+         moveCaret(char,Direction.left)
 
     }
 
@@ -231,14 +227,13 @@ function App() {
         // setSelection((prev)=>({
         //     ...prev,
         //     startNode:e.target,
-        //     visibile:true
+        //     visible:true
         // }))
     }
 
 
     const getCharWidth = (char:string) => {
         // Replace spaces by their HTML Code
-
         char = char === Keys.Space ? "&nbsp;" : char
 
         const span = document.createElement('span');
@@ -249,13 +244,43 @@ function App() {
         return boundingClientRect.width
     }
 
+    function moveCaret(char:string,dir:Direction){
+        const charWidth = getCharWidth(char)
+        const newPosition = dir === Direction.right ? caret.x + charWidth : caret.x - charWidth
+
+        setCaret((prev)=>({...prev,x:newPosition}))
+    }
+
+    function moveWithArrowCursor(dir: Direction){
+        const content = editor.currentNode?.content
+        if (!content) return;
+
+        const x = editor.cursor.x
+        if (dir === Direction.left && x === 0) return
+        if (dir === Direction.right && x > content.length) return;
+
+
+        const newPosition = dir === Direction.right ? x + 1 : x - 1
+        const char = content[newPosition]
+
+        console.log(x, content.length)
+
+        setEditor((prev)=>({
+            ...prev,
+            cursor:{x:newPosition,y:prev.cursor.y},
+        }))
+        moveCaret(char,dir)
+
+
+    }
+
 
 
     return (
     <div className="no-select cursor-text editor">
         <div id='caret' className='bg-black px-0 py-2.5 w-0.5 h-1 absolute' style={{ left: `${caret.x}px`, top: `${caret.y}px` }} />
         <div id='selection' className="absolute bg-blue-400/50 rounded -z-50" style={{
-            visibility: selection.visibile ?'visible' : 'hidden',
+            visibility: selection.visible ? 'visible' : 'hidden',
             width:300,
             height:300
         }}/>
