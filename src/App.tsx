@@ -4,7 +4,7 @@ import {Direction} from "./types/Editor.ts";
 import {
     addCharToNode,
     documentResolver,
-    findNodeFromId,
+    findNodeFromId, findNodeInDomFromId,
     removeCharFromNode,
     updateNode
 } from "./helpers/NodeHelpers.tsx";
@@ -50,7 +50,8 @@ const editorDefault : Editor = {
     },
     cursor:{
         x:0,
-        y:0
+        y:0,
+        anchorX:0
     },
     currentNode:null
 }
@@ -93,7 +94,7 @@ function App() {
             console.log(e)
         });
 
-        return removeEventListener("click",()=>{
+        return document.removeEventListener("click",()=>{
             console.warn("removed event");
         })
     }, []);
@@ -114,7 +115,7 @@ function App() {
 
         setEditor((prev)=>({
             ...prev,
-            cursor:{x:caret?.offset || 0,y:0},
+            cursor:{...prev.cursor,x:caret?.offset || 0},
             currentNode:node
         }))
     }
@@ -131,14 +132,16 @@ function App() {
                 moveWithArrowCursor(Direction.right)
                 break
             }
-            case Keys.ArrowUp:
-            case Keys.ArrowDown:
-            case Keys.Enter:
-            case Keys.Escape:
             case Keys.Backspace:{
                 removeCharacter()
                 break;
             }
+            case Keys.ArrowUp:
+                moveUpCursor()
+                break
+            case Keys.ArrowDown:
+            case Keys.Enter:
+            case Keys.Escape:
             case Keys.Tab:
             case Keys.Delete:
             case Keys.Shift:
@@ -182,7 +185,7 @@ function App() {
         setEditor((prev)=>({
             ...prev,
             doc:newDoc,
-            cursor:{x:cursor.x + 1,y:cursor.y},
+            cursor:{...prev.cursor,x:cursor.x + 1,anchorX:cursor.x + 1},
             currentNode:newNode
         }))
 
@@ -210,7 +213,7 @@ function App() {
         setEditor((prev)=>({
             ...prev,
             doc:newDoc,
-            cursor:{x:cursor.x - 1,y:cursor.y},
+            cursor:{...prev.cursor,x:cursor.x - 1,anchorX:cursor.x - 1},
             currentNode:newNode
         }))
 
@@ -219,7 +222,7 @@ function App() {
 
         const char = currentNode.content ? currentNode.content[cursor.x - 1] : ''
 
-         moveCaret(char,Direction.left)
+        moveCaret(char,Direction.left)
 
     }
 
@@ -256,25 +259,40 @@ function App() {
         if (!content) return;
 
         const x = editor.cursor.x
-        if (dir === Direction.left && x === 0) return
-        if (dir === Direction.right && x > content.length) return;
-
+        if (dir === Direction.left && x <= 0) return
+        if (dir === Direction.right && x >= content.length) return;
 
         const newPosition = dir === Direction.right ? x + 1 : x - 1
-        const char = content[newPosition]
-
-        console.log(x, content.length)
+        const pos = dir === Direction.right ? x : x - 1
+        const char = content[pos]
 
         setEditor((prev)=>({
             ...prev,
-            cursor:{x:newPosition,y:prev.cursor.y},
+            cursor:{...prev.cursor,x:newPosition,anchorX:newPosition}
         }))
+
         moveCaret(char,dir)
-
-
     }
 
+    function moveUpCursor(){
+        const { currentNode,doc} = editor
 
+        const previousElement = findNodeInDomFromId(currentNode?.id)?.previousElementSibling
+        if (!previousElement) return
+
+        const boundingClientRect = previousElement?.getBoundingClientRect()
+        const newNode = findNodeFromId(doc,[],previousElement?.id)
+
+        if (!newNode) return
+
+        setEditor((prev)=>({
+            ...prev,
+            currentNode: newNode[0]
+        }))
+
+        setCaret({x:boundingClientRect.x,y:boundingClientRect.y})
+
+    }
 
     return (
     <div className="no-select cursor-text editor">

@@ -4,7 +4,8 @@ export interface Editor {
     doc:Node,
     cursor : {
         x:number,
-        y:number
+        y:number,
+        anchorX:number
     },
     currentNode:Node|null
 }
