@@ -1,10 +1,11 @@
 import './App.css'
 import type {Editor} from "./types/Editor.ts";
-import {Direction} from "./types/Editor.ts";
 import {
     addCharToNode,
     documentResolver,
-    findNodeFromId, findNodeInDomFromId,
+    findNextNode,
+    findNodeFromId,
+    findPreviousNode,
     removeCharFromNode,
     updateNode
 } from "./helpers/NodeHelpers.tsx";
@@ -112,10 +113,11 @@ function App() {
         const id = caret?.offsetNode.parentElement?.id
         const results = findNodeFromId(editorRef.current.doc,[],id)
         const node = results ? results[0] : null
+        const offset = caret?.offset || 0
 
         setEditor((prev)=>({
             ...prev,
-            cursor:{...prev.cursor,x:caret?.offset || 0},
+            cursor:{...prev.cursor,x:offset,anchorX:offset},
             currentNode:node
         }))
     }
@@ -125,11 +127,11 @@ function App() {
 
         switch (key){
             case Keys.ArrowLeft: {
-                moveWithArrowCursor(Direction.left)
+                moveWithArrowCursor(Keys.ArrowLeft)
                 break
             }
             case Keys.ArrowRight: {
-                moveWithArrowCursor(Direction.right)
+                moveWithArrowCursor(Keys.ArrowRight)
                 break
             }
             case Keys.Backspace:{
@@ -137,7 +139,7 @@ function App() {
                 break;
             }
             case Keys.ArrowUp:
-                moveUpCursor()
+                moveCursorHorizontal(Keys.ArrowUp)
                 break
             case Keys.ArrowDown:
             case Keys.Enter:
@@ -193,7 +195,7 @@ function App() {
         setEditorView(result)
 
 
-        moveCaret(char,Direction.right)
+        moveCaret(char,Keys.ArrowRight)
     }
 
      function removeCharacter(){
@@ -222,7 +224,7 @@ function App() {
 
         const char = currentNode.content ? currentNode.content[cursor.x - 1] : ''
 
-        moveCaret(char,Direction.left)
+        moveCaret(char,Keys.ArrowLeft)
 
     }
 
@@ -247,23 +249,23 @@ function App() {
         return boundingClientRect.width
     }
 
-    function moveCaret(char:string,dir:Direction){
+    function moveCaret(char:string,key:Keys){
         const charWidth = getCharWidth(char)
-        const newPosition = dir === Direction.right ? caret.x + charWidth : caret.x - charWidth
+        const newPosition = key === Keys.ArrowRight ? caret.x + charWidth : caret.x - charWidth
 
         setCaret((prev)=>({...prev,x:newPosition}))
     }
 
-    function moveWithArrowCursor(dir: Direction){
+    function moveWithArrowCursor(key: Keys){
         const content = editor.currentNode?.content
         if (!content) return;
 
         const x = editor.cursor.x
-        if (dir === Direction.left && x <= 0) return
-        if (dir === Direction.right && x >= content.length) return;
+        if (key === Keys.ArrowLeft && x <= 0) return
+        if (key === Keys.ArrowRight && x >= content.length) return;
 
-        const newPosition = dir === Direction.right ? x + 1 : x - 1
-        const pos = dir === Direction.right ? x : x - 1
+        const newPosition = key === Keys.ArrowRight ? x + 1 : x - 1
+        const pos = key === Keys.ArrowRight ? x : x - 1
         const char = content[pos]
 
         setEditor((prev)=>({
@@ -271,26 +273,41 @@ function App() {
             cursor:{...prev.cursor,x:newPosition,anchorX:newPosition}
         }))
 
-        moveCaret(char,dir)
+        moveCaret(char,key)
     }
 
-    function moveUpCursor(){
-        const { currentNode,doc} = editor
+    function getStringWidth(str:string,pos:number){
+        let px = 0        
+        for(let i = 0; i < pos ; i++){
+            px+= getCharWidth(str[i])
+        }
 
-        const previousElement = findNodeInDomFromId(currentNode?.id)?.previousElementSibling
-        if (!previousElement) return
+        return px;
+    }
 
-        const boundingClientRect = previousElement?.getBoundingClientRect()
-        const newNode = findNodeFromId(doc,[],previousElement?.id)
+    function moveCursorHorizontal(key:Keys){
+        const { currentNode, doc , cursor} = editor
 
-        if (!newNode) return
+        const {node,domNode} = findNextNode(doc,currentNode?.id)
+
+        if(!node || !domNode){
+            console.warn("Node or dom node not found !")
+            return
+        }
+        
+        const boundingClientRect = domNode.getBoundingClientRect()
+        const strLen = node.content?.length || 0
+        const pos = cursor.anchorX > strLen ? strLen : cursor.anchorX
+
+        const width = getStringWidth(node?.content || "", pos)
 
         setEditor((prev)=>({
             ...prev,
-            currentNode: newNode[0]
+            currentNode: node,
+            cursor:{...prev.cursor,x:pos}
         }))
 
-        setCaret({x:boundingClientRect.x,y:boundingClientRect.y})
+        setCaret({x:width,y:boundingClientRect.y})
 
     }
 

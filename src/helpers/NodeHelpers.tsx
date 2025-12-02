@@ -81,3 +81,24 @@ export function findNodeInDomFromId(id?:string){
 
     return document.getElementById(id)
 }
+
+
+export function findPreviousNode(doc:Node,id?:string){
+       const previousElement = findNodeInDomFromId(id)?.previousElementSibling
+        if (!previousElement) return {}
+
+        const node = findNodeFromId(doc,[],previousElement?.id)
+        if (!node) return {}
+
+        return {node : node[0], domNode:previousElement}
+}
+export function findNextNode(doc:Node,id?:string){
+      const nextElement = findNodeInDomFromId(id)?.nextElementSibling
+        if (!nextElement) return {}
+        
+        const node = findNodeFromId(doc,[],nextElement?.id)
+        if (!node) return {}
+
+        return {node : node[0], domNode:nextElement}
+}
+
