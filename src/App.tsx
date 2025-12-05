@@ -92,7 +92,7 @@ function App() {
         //     console.log(e)
         // });
          document.addEventListener("mouseup", (e:MouseEvent) => {
-            console.log(e)
+            // console.log(e)
         });
 
         return document.removeEventListener("click",()=>{
@@ -108,6 +108,8 @@ function App() {
     function handleMouseClick(x:number,y:number){
         const caret = document.caretPositionFromPoint(x,y)
         const nodeRect = caret?.getClientRect() || {x:0,y:0}
+
+        console.log(x,nodeRect.x)
         setCaret({x:nodeRect.x, y:nodeRect.y})
 
         const id = caret?.offsetNode.parentElement?.id
@@ -142,6 +144,8 @@ function App() {
                 moveCursorHorizontal(Keys.ArrowUp)
                 break
             case Keys.ArrowDown:
+                moveCursorHorizontal(Keys.ArrowDown)
+                break
             case Keys.Enter:
             case Keys.Escape:
             case Keys.Tab:
@@ -284,23 +288,36 @@ function App() {
 
         return px;
     }
-
+    
     function moveCursorHorizontal(key:Keys){
         const { currentNode, doc , cursor} = editor
 
-        const {node,domNode} = findNextNode(doc,currentNode?.id)
+        let newNode = null
+        if(key === Keys.ArrowDown)   
+             newNode = findNextNode(doc,currentNode?.id)
+        else if(key === Keys.ArrowUp)
+             newNode = findPreviousNode(doc,currentNode?.id)
 
-        if(!node || !domNode){
+         if(!newNode){
             console.warn("Node or dom node not found !")
             return
         }
-        
+
+        const {node,domNode} = newNode
+
+
         const boundingClientRect = domNode.getBoundingClientRect()
         const strLen = node.content?.length || 0
         const pos = cursor.anchorX > strLen ? strLen : cursor.anchorX
+        const content = node?.content || ""
 
-        const width = getStringWidth(node?.content || "", pos)
+        let width = getStringWidth(content, pos)
+        const currentWidth = caret.x
 
+        if(Math.abs(width - currentWidth) > 5 && content[pos]){
+            width+= getCharWidth(content[pos])
+        }
+        
         setEditor((prev)=>({
             ...prev,
             currentNode: node,
