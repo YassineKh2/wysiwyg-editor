@@ -281,19 +281,19 @@ function App() {
     }
 
     function getStringWidth(str:string,pos:number){
-        let px = 0        
+        let px = 0
         for(let i = 0; i < pos ; i++){
             px+= getCharWidth(str[i])
         }
 
         return px;
     }
-    
+
     function moveCursorHorizontal(key:Keys){
         const { currentNode, doc , cursor} = editor
 
         let newNode = null
-        if(key === Keys.ArrowDown)   
+        if(key === Keys.ArrowDown)
              newNode = findNextNode(doc,currentNode?.id)
         else if(key === Keys.ArrowUp)
              newNode = findPreviousNode(doc,currentNode?.id)
@@ -307,17 +307,30 @@ function App() {
 
 
         const boundingClientRect = domNode.getBoundingClientRect()
-        const strLen = node.content?.length || 0
-        const pos = cursor.anchorX > strLen ? strLen : cursor.anchorX
+        const contentLen = node.content?.length || 0
+        const pos = cursor.anchorX > contentLen ? contentLen : cursor.anchorX
         const content = node?.content || ""
 
         let width = getStringWidth(content, pos)
+        const totalWidth = getStringWidth(content, contentLen)
         const currentWidth = caret.x
 
-        if(Math.abs(width - currentWidth) > 5 && content[pos]){
-            width+= getCharWidth(content[pos])
+        console.log(Math.abs(currentWidth - width))
+
+        if( currentWidth > totalWidth ) width = totalWidth
+
+        else if (Math.abs(currentWidth - width) >= 5 ){
+            let i = pos;
+            while(Math.abs(currentWidth - width) <= 5) {
+                width+= getCharWidth(content[i])
+                if (i >= contentLen || width >= currentWidth) break
+
+                i++
+                console.log("sup")
+            }
+
         }
-        
+
         setEditor((prev)=>({
             ...prev,
             currentNode: node,
