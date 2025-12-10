@@ -1,16 +1,17 @@
-import type {Node} from "../types/Node.ts";
+import type {Node,} from "../types/Node.ts";
+import {NodeTypes} from "../types/Node.ts";
 import type {JSX} from "react";
 
 // Takes a document and returns the HTML Part
 export function parseDoc (doc: Node) {
     switch (doc.type){
-        case "text":
+        case NodeTypes.parapagh:
             return <p id={doc.id}>{doc.content}</p>
 
-        case "bold":
+        case NodeTypes.bold:
             return <strong id={doc.id}>{doc.content}</strong>
 
-        case "image":
+        case NodeTypes.image:
             return <img src={doc.content as string} alt={"image"}/>
             
         default:

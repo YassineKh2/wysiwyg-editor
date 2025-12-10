@@ -13,20 +13,21 @@ import type {JSX} from "react";
 import {Fragment, useEffect, useRef, useState} from "react";
 import {useHotkeys} from "react-hotkeys-hook";
 import {Keys} from "./types/Keys.ts";
+import { NodeTypes } from './types/Node.ts';
 
 const editorDefault : Editor = {
     doc:{
-        type:'text',
-        content:"Hello this is a text",
+        type:NodeTypes.parapagh,
+        content:"Hello this a text",
         children:[{
-            type:'text',
+            type:NodeTypes.parapagh,
             content:"1st",
             children:[{
-                type:'text',
-                content:"1st sub text",
+                type:NodeTypes.parapagh,
+                content:"1st sub node text",
                 children:[
                     {
-                        type:'text',
+                        type:NodeTypes.parapagh,
                         content:"1st sub sub sub text",
                         children:[]
                     }
@@ -34,16 +35,16 @@ const editorDefault : Editor = {
             }]
         },
         {
-            type:'bold',
+            type:NodeTypes.bold,
             content:"2nd children",
             children:[{
-                type:'text',
-                content:'2nd sub text',
+                type:NodeTypes.parapagh,
+                content:'2nd sub node text',
                 children:[]
             }]
         }
         ,{
-                type:'text',
+                type:NodeTypes.parapagh,
                 content:"3rd",
                 children:[]
             }
@@ -61,6 +62,8 @@ const editorDefault : Editor = {
 interface selectionType {
     startNode : EventTarget | null,
     endNode : EventTarget | null,
+    startPos:number | null,
+    endPos:number | null,
     visible:boolean
 }
 
@@ -72,6 +75,8 @@ function App() {
     const [selection,setSelection] = useState<selectionType>({
         startNode : null,
         endNode : null,
+        startPos:null,
+        endPos:null,
         visible:false
     })
 
@@ -92,7 +97,7 @@ function App() {
         //     console.log(e)
         // });
          document.addEventListener("mouseup", (e:MouseEvent) => {
-            // console.log(e)
+            handleSelection(e)
         });
 
         return document.removeEventListener("click",()=>{
@@ -103,6 +108,10 @@ function App() {
     useEffect(() => {
         editorRef.current = editor;
     }, [editor]);
+
+     useEffect(() => {
+        console.log(selection)
+    }, [selection]);
 
 
     function handleMouseClick(x:number,y:number){
@@ -199,7 +208,7 @@ function App() {
         setEditorView(result)
 
 
-        moveCaret(char,Keys.ArrowRight)
+        moveCaret(char,Keys.ArrowRight,currentNode.type)
     }
 
      function removeCharacter(){
@@ -228,24 +237,42 @@ function App() {
 
         const char = currentNode.content ? currentNode.content[cursor.x - 1] : ''
 
-        moveCaret(char,Keys.ArrowLeft)
+        moveCaret(char,Keys.ArrowLeft,currentNode.type)
 
     }
 
     function handleSelection(e:MouseEvent){
-        // setSelection((prev)=>({
-        //     ...prev,
-        //     startNode:e.target,
-        //     visible:true
-        // }))
+        const caret = document.caretPositionFromPoint(e.clientX,e.clientY)
+        const pos = caret?.offset || 0
+        if(e.type === "mousedown")
+            setSelection({
+                startNode:e.target,
+                startPos:pos,
+                endNode:null,
+                endPos:null,
+                visible:false
+            })
+        else 
+            setSelection((prev)=>({
+                ...prev,
+                endNode:e.target,
+                endPos:pos
+            }))       
     }
 
 
-    const getCharWidth = (char:string) => {
+    const getCharWidth = (char:string,type:NodeTypes) => {
         // Replace spaces by their HTML Code
         char = char === Keys.Space ? "&nbsp;" : char
 
-        const span = document.createElement('span');
+        let span
+        switch (type){
+            case NodeTypes.bold:
+                span = document.createElement('strong');
+                break
+            default:
+                span = document.createElement('span');
+        }
         span.innerHTML = char;
         document.body.appendChild(span);
         const boundingClientRect = span.getBoundingClientRect();
@@ -253,8 +280,8 @@ function App() {
         return boundingClientRect.width
     }
 
-    function moveCaret(char:string,key:Keys){
-        const charWidth = getCharWidth(char)
+    function moveCaret(char:string,key:Keys,type:NodeTypes){
+        const charWidth = getCharWidth(char,type)
         const newPosition = key === Keys.ArrowRight ? caret.x + charWidth : caret.x - charWidth
 
         setCaret((prev)=>({...prev,x:newPosition}))
@@ -262,6 +289,7 @@ function App() {
 
     function moveWithArrowCursor(key: Keys){
         const content = editor.currentNode?.content
+        const type = editor.currentNode?.type || NodeTypes.parapagh
         if (!content) return;
 
         const x = editor.cursor.x
@@ -277,13 +305,13 @@ function App() {
             cursor:{...prev.cursor,x:newPosition,anchorX:newPosition}
         }))
 
-        moveCaret(char,key)
+        moveCaret(char,key,type)
     }
 
-    function getStringWidth(str:string,pos:number){
+    function getStringWidth(str:string,pos:number,type:NodeTypes){
         let px = 0
         for(let i = 0; i < pos ; i++){
-            px+= getCharWidth(str[i])
+            px+= getCharWidth(str[i],type)
         }
 
         return px;
@@ -310,25 +338,24 @@ function App() {
         const contentLen = node.content?.length || 0
         const pos = cursor.anchorX > contentLen ? contentLen : cursor.anchorX
         const content = node?.content || ""
+        const type = node?.type
 
-        let width = getStringWidth(content, pos)
-        const totalWidth = getStringWidth(content, contentLen)
+        let width = getStringWidth(content, pos,type)
+        const totalWidth = getStringWidth(content, contentLen,type)
         const currentWidth = caret.x
 
         console.log(Math.abs(currentWidth - width))
 
-        if( currentWidth > totalWidth ) width = totalWidth
+        if(currentWidth > totalWidth) width = totalWidth
 
-        else if (Math.abs(currentWidth - width) >= 5 ){
-            let i = pos;
-            while(Math.abs(currentWidth - width) <= 5) {
-                width+= getCharWidth(content[i])
-                if (i >= contentLen || width >= currentWidth) break
+        else if (Math.abs(currentWidth - width) > 5 ){
+            for(let i = pos;i <= contentLen ; i++) {
+                width+= getCharWidth(content[i],type)
+                if (width >= currentWidth || Math.abs(currentWidth - width) <= 3) break
 
                 i++
                 console.log("sup")
             }
-
         }
 
         setEditor((prev)=>({
