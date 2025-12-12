@@ -13,6 +13,7 @@ import type { JSX } from "react";
 import { Fragment, useEffect, useRef, useState } from "react";
 import { useHotkeys } from "react-hotkeys-hook";
 import { Keys } from "./types/Keys.ts";
+import type { Node } from "./types/Node.ts";
 import { NodeTypes } from "./types/Node.ts";
 
 const editorDefault: Editor = {
@@ -32,10 +33,25 @@ const editorDefault: Editor = {
                 type: NodeTypes.parapagh,
                 content: "1st sub sub sub text",
                 children: [],
+                isInline: true,
               },
             ],
+            isInline: true,
+          },
+          {
+            type: NodeTypes.bold,
+            content: "boldie",
+            children: [],
+            isInline: true,
+          },
+          {
+            type: NodeTypes.parapagh,
+            content: "aftr boldie",
+            children: [],
+            isInline: true,
           },
         ],
+        isInline: true,
       },
       {
         type: NodeTypes.bold,
@@ -45,13 +61,17 @@ const editorDefault: Editor = {
             type: NodeTypes.parapagh,
             content: "2nd sub node text",
             children: [],
+            isInline: true,
           },
         ],
+        isInline: true,
       },
       {
         type: NodeTypes.parapagh,
         content: "3rd",
         children: [],
+
+        isInline: true,
       },
       {
         type: NodeTypes.listParent,
@@ -61,20 +81,25 @@ const editorDefault: Editor = {
             type: NodeTypes.listChild,
             content: "hi i am child number 1",
             children: [],
+            isInline: false,
           },
           {
             type: NodeTypes.listChild,
             content: "hi i am child number 2",
             children: [],
+            isInline: false,
           },
           {
             type: NodeTypes.listChild,
             content: "hi i am child number 3",
             children: [],
+            isInline: false,
           },
         ],
+        isInline: false,
       },
     ],
+    isInline: true,
   },
   cursor: {
     x: 0,
@@ -312,16 +337,33 @@ function App() {
     if (!content) return;
 
     const x = editor.cursor.x;
-    if (key === Keys.ArrowLeft && x <= 0) return;
-    if (key === Keys.ArrowRight && x >= content.length) return;
+    let newNode:
+      | {
+          node: Node;
+          domNode: Element;
+        }
+      | undefined;
 
-    const newPosition = key === Keys.ArrowRight ? x + 1 : x - 1;
+    let newPosition = key === Keys.ArrowRight ? x + 1 : x - 1;
     const pos = key === Keys.ArrowRight ? x : x - 1;
-    const char = content[pos];
+    let char = content[pos];
+
+    if (key === Keys.ArrowLeft && x <= 0) {
+      newNode = findPreviousNode(editor.doc, editor.currentNode?.id);
+      newPosition = newNode?.node.content?.length || 0;
+      char = content[newPosition - 1];
+    } else if (key === Keys.ArrowRight && x >= content.length) {
+      newNode = findNextNode(editor.doc, editor.currentNode?.id);
+      newPosition = 0;
+      char = content[0];
+    }
+
+    if (!newNode) return;
 
     setEditor((prev) => ({
       ...prev,
       cursor: { ...prev.cursor, x: newPosition, anchorX: newPosition },
+      currentNode: newNode?.node,
     }));
 
     moveCaret(char, key, type);
@@ -364,15 +406,16 @@ function App() {
     console.log(Math.abs(currentWidth - width));
 
     if (currentWidth > totalWidth) width = totalWidth;
-    else if (Math.abs(currentWidth - width) > 5) {
-      for (let i = pos; i <= contentLen; i++) {
-        width += getCharWidth(content[i], type);
-        if (width >= currentWidth || Math.abs(currentWidth - width) <= 3) break;
 
-        i++;
-        console.log("sup");
-      }
-    }
+    // else if (Math.abs(currentWidth - width) > 5) {
+    //   for (let i = pos; i <= contentLen; i++) {
+    //     width += getCharWidth(content[i], type);
+    //     if (width >= currentWidth || Math.abs(currentWidth - width) <= 3) break;
+
+    //     i++;
+    //     console.log("sup");
+    //   }
+    // }
 
     setEditor((prev) => ({
       ...prev,

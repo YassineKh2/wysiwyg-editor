@@ -6,7 +6,7 @@ import type { JSX } from "react";
 export function parseDoc(doc: Node) {
   switch (doc.type) {
     case NodeTypes.parapagh:
-      return <p id={doc.id}>{doc.content}</p>;
+      return <span id={doc.id}>{doc.content}</span>;
 
     case NodeTypes.bold:
       return <strong id={doc.id}>{doc.content}</strong>;
@@ -15,13 +15,14 @@ export function parseDoc(doc: Node) {
       return <img id={doc.id} src={doc.content as string} alt={"image"} />;
 
     case NodeTypes.listParent:
-      const children = doc.children;
-      let result = [] as JSX.Element[];
-      children?.forEach((child) => result.push(parseDoc(child)));
-      return <ol id={doc.id}>{result}</ol>;
+      return <ol id={doc.id}>{doc.content}</ol>;
 
     case NodeTypes.listChild:
-      return <li id={doc.id}>{doc.content}</li>;
+      return (
+        <li className="list-disc list-inside" id={doc.id}>
+          {doc.content}
+        </li>
+      );
 
     default:
       return <div id={doc.id}></div>;

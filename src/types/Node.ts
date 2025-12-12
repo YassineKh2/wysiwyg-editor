@@ -3,6 +3,7 @@ export interface Node {
   type: NodeTypes;
   content: string | null;
   children: Node[] | null;
+  isInline: boolean;
 }
 
 export enum NodeTypes {
