@@ -13,7 +13,6 @@ import type { JSX } from "react";
 import { Fragment, useEffect, useRef, useState } from "react";
 import { useHotkeys } from "react-hotkeys-hook";
 import { Keys } from "./types/Keys.ts";
-import type { Node } from "./types/Node.ts";
 import { NodeTypes } from "./types/Node.ts";
 
 const editorDefault: Editor = {
@@ -323,50 +322,62 @@ function App() {
     return boundingClientRect.width;
   };
 
-  function moveCaret(char: string, key: Keys, type: NodeTypes) {
+  function moveCaret(char: string, direction: Keys, type: NodeTypes) {
     const charWidth = getCharWidth(char, type);
     const newPosition =
-      key === Keys.ArrowRight ? caret.x + charWidth : caret.x - charWidth;
+      direction === Keys.ArrowRight ? caret.x + charWidth : caret.x - charWidth;
 
     setCaret((prev) => ({ ...prev, x: newPosition }));
   }
 
-  function moveWithArrowCursor(key: Keys) {
-    const content = editor.currentNode?.content;
-    const type = editor.currentNode?.type || NodeTypes.parapagh;
-    if (!content) return;
+  function moveWithArrowCursor(direction: Keys) {
+    let content = editor.currentNode?.content;
+    let newNode = editor.currentNode;
 
+    if (!content || !newNode) return;
+
+    let type = newNode.type;
     const x = editor.cursor.x;
-    let newNode:
-      | {
-          node: Node;
-          domNode: Element;
-        }
-      | undefined;
 
-    let newPosition = key === Keys.ArrowRight ? x + 1 : x - 1;
-    const pos = key === Keys.ArrowRight ? x : x - 1;
+    let newPosition = direction === Keys.ArrowRight ? x + 1 : x - 1;
+    const pos = direction === Keys.ArrowRight ? x : x - 1;
     let char = content[pos];
 
-    if (key === Keys.ArrowLeft && x <= 0) {
-      newNode = findPreviousNode(editor.doc, editor.currentNode?.id);
-      newPosition = newNode?.node.content?.length || 0;
-      char = content[newPosition - 1];
-    } else if (key === Keys.ArrowRight && x >= content.length) {
-      newNode = findNextNode(editor.doc, editor.currentNode?.id);
-      newPosition = 0;
-      char = content[0];
-    }
+    if (direction === Keys.ArrowLeft && x - 1 == 0) {
+      const previousNode = findPreviousNode(editor.doc, editor.currentNode?.id);
+      if (!previousNode) return;
 
-    if (!newNode) return;
+      newNode = previousNode.node;
+      content = newNode.content;
+      if (!content) return;
+      newPosition = content.length;
+
+      console.log("previous Node");
+      console.log(previousNode, char, newPosition);
+    } else if (direction === Keys.ArrowRight && x + 1 > content.length) {
+      const nextNode = findNextNode(editor.doc, editor.currentNode?.id);
+      if (!nextNode) return;
+
+      newNode = nextNode.node;
+      content = newNode.content;
+      if (!content) return;
+
+      type = newNode.type;
+      // Cursor index starts from 1
+      newPosition = 1;
+      char = content[0];
+
+      console.log("next Node");
+      console.log(nextNode, char, newPosition);
+    }
 
     setEditor((prev) => ({
       ...prev,
       cursor: { ...prev.cursor, x: newPosition, anchorX: newPosition },
-      currentNode: newNode?.node,
+      currentNode: newNode,
     }));
 
-    moveCaret(char, key, type);
+    moveCaret(char, direction, type);
   }
 
   function getStringWidth(str: string, pos: number, type: NodeTypes) {
