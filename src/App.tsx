@@ -7,6 +7,7 @@ import {
   findNodeFromId,
   findPreviousNode,
   removeCharFromNode,
+  removeNode,
   updateNode,
 } from "./helpers/NodeHelpers.tsx";
 import type { JSX } from "react";
@@ -195,6 +196,7 @@ function App() {
         moveWithArrowCursor(Keys.ArrowRight);
         break;
       }
+      case Keys.Delete:
       case Keys.Backspace: {
         removeCharacter();
         break;
@@ -208,7 +210,6 @@ function App() {
       case Keys.Enter:
       case Keys.Escape:
       case Keys.Tab:
-      case Keys.Delete:
       case Keys.Shift:
       case Keys.Control:
       case Keys.Alt:
@@ -259,6 +260,11 @@ function App() {
     const { cursor, doc, currentNode } = editor;
 
     if (!currentNode) return;
+
+    if (currentNode.content?.length === 1) {
+      const newDoc = removeNode(doc, currentNode.id);
+      console.log(newDoc);
+    }
 
     const docCopy = structuredClone(doc);
 

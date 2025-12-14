@@ -37,7 +37,7 @@ export function documentResolver(doc: Node, keepId?: boolean): JSX.Element[] {
 
   const result: JSX.Element[] = [];
   doc.children.forEach((childDoc) => {
-    // @ts-ignore TODO typing
+    // @ts-expect-error TODO typing
     result.push(documentResolver(childDoc, keepId));
   });
 
@@ -109,4 +109,26 @@ export function findNextNode(doc: Node, id?: string) {
   if (!node) return;
 
   return { node: node[0], domNode: nextElement };
+}
+
+export function removeNode(doc: Node, id?: string) {
+  if (doc.id === id) {
+    if (doc.children?.length) return doc.children;
+    else return null;
+  }
+
+  if (!doc.children?.length) return [doc];
+
+  const childrenArr = [];
+
+  for (let i = 0; i < doc.children?.length; i++) {
+    const result = removeNode(doc.children[i], id);
+    if (!result) continue;
+
+    childrenArr.push(result.flat(1));
+  }
+
+  doc.children = childrenArr.flat(1);
+
+  return [doc];
 }
