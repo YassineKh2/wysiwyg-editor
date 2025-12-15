@@ -162,14 +162,13 @@ function App() {
   }, [editor]);
 
   useEffect(() => {
-    console.log(selection);
+    // console.log(selection);
   }, [selection]);
 
   function handleMouseClick(x: number, y: number) {
     const caret = document.caretPositionFromPoint(x, y);
     const nodeRect = caret?.getClientRect() || { x: 0, y: 0 };
 
-    console.log(x, nodeRect.x);
     setCaret({ x: nodeRect.x, y: nodeRect.y });
 
     const id = caret?.offsetNode.parentElement?.id;
@@ -261,10 +260,16 @@ function App() {
 
     if (!currentNode) return;
 
-    if (currentNode.content?.length === 1) {
-      const newDoc = removeNode(doc, currentNode.id);
-      console.log(newDoc);
+    const content = currentNode.content || "";
+    let moveToNextNode = false;
+
+    if (content.length === 1) {
+      deleteNode();
+      return;
     }
+
+    // Before the last character
+    if (cursor.x === 2) moveToNextNode = true;
 
     const docCopy = structuredClone(doc);
 
@@ -272,8 +277,12 @@ function App() {
     const currentNodeCopy = structuredClone(currentNode);
     currentNodeCopy.id = newId;
 
-    const newNode = removeCharFromNode(currentNodeCopy, cursor.x);
+    let newNode = removeCharFromNode(currentNodeCopy, cursor.x);
     const newDoc = updateNode(docCopy, currentNode, newNode);
+
+    newNode = moveToNextNode
+      ? findPreviousNode(doc, currentNode.id)?.node
+      : undefined;
 
     setEditor((prev) => ({
       ...prev,
@@ -285,8 +294,30 @@ function App() {
     const result = documentResolver(newDoc, true).flat(Infinity);
     setEditorView(result);
 
-    const char = currentNode.content ? currentNode.content[cursor.x - 1] : "";
+    const char = content[cursor.x - 1];
+    moveCaret(char, Keys.ArrowLeft, currentNode.type);
+  }
 
+  function deleteNode() {
+    const { doc, currentNode } = editor;
+    if (!currentNode) return;
+
+    const newDoc = removeNode(doc, currentNode.id);
+    if (!newDoc) return;
+    const newNode = findPreviousNode(doc, currentNode.id)?.node || null;
+    const cursorX = newNode?.content?.length || 1;
+
+    setEditor((prev) => ({
+      ...prev,
+      doc: newDoc[0],
+      cursor: { ...prev.cursor, x: cursorX, anchorX: cursorX },
+      currentNode: newNode,
+    }));
+
+    const result = documentResolver(newDoc[0], true).flat(Infinity);
+    setEditorView(result);
+
+    const char = currentNode.content ? currentNode.content[0] : "";
     moveCaret(char, Keys.ArrowLeft, currentNode.type);
   }
 
@@ -419,8 +450,6 @@ function App() {
     let width = getStringWidth(content, pos, type);
     const totalWidth = getStringWidth(content, contentLen, type);
     const currentWidth = caret.x;
-
-    console.log(Math.abs(currentWidth - width));
 
     if (currentWidth > totalWidth) width = totalWidth;
 
