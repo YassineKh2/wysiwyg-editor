@@ -268,8 +268,13 @@ function App() {
       return;
     }
 
-    // Before the last character
-    if (cursor.x === 2) moveToNextNode = true;
+    // In Between Nodes
+    if (cursor.x === 0) {
+      removeFormNextNode();
+      return;
+    }
+
+    if (cursor.x === 1) moveToNextNode = true;
 
     const docCopy = structuredClone(doc);
 
@@ -280,14 +285,18 @@ function App() {
     let newNode = removeCharFromNode(currentNodeCopy, cursor.x);
     const newDoc = updateNode(docCopy, currentNode, newNode);
 
-    newNode = moveToNextNode
-      ? findPreviousNode(doc, currentNode.id)?.node
-      : undefined;
+    const previousNode =
+      moveToNextNode && findPreviousNode(doc, currentNode.id);
+
+    if (previousNode) newNode = previousNode.node;
+
+    const newContentLength = newNode.content?.length || 1;
+    const cursorX = moveToNextNode ? newContentLength : cursor.x - 1;
 
     setEditor((prev) => ({
       ...prev,
       doc: newDoc,
-      cursor: { ...prev.cursor, x: cursor.x - 1, anchorX: cursor.x - 1 },
+      cursor: { ...prev.cursor, x: cursorX, anchorX: cursorX },
       currentNode: newNode,
     }));
 
@@ -302,9 +311,11 @@ function App() {
     const { doc, currentNode } = editor;
     if (!currentNode) return;
 
-    const newDoc = removeNode(doc, currentNode.id);
+    const docCopy = structuredClone(doc);
+
+    const newDoc = removeNode(docCopy, currentNode.id);
     if (!newDoc) return;
-    const newNode = findPreviousNode(doc, currentNode.id)?.node || null;
+    const newNode = findPreviousNode(docCopy, currentNode.id)?.node || null;
     const cursorX = newNode?.content?.length || 1;
 
     setEditor((prev) => ({
@@ -319,6 +330,35 @@ function App() {
 
     const char = currentNode.content ? currentNode.content[0] : "";
     moveCaret(char, Keys.ArrowLeft, currentNode.type);
+  }
+
+  function removeFormNextNode() {
+    const { doc, currentNode } = editor;
+    if (!currentNode) return;
+
+    const docCopy = structuredClone(doc);
+
+    const previousNode = findPreviousNode(docCopy, currentNode.id)?.node;
+    if (!previousNode) return;
+
+    const previousNodeCopy = structuredClone(previousNode);
+    const cursorX = previousNodeCopy?.content?.length || 1;
+
+    const newNode = removeCharFromNode(previousNodeCopy, cursorX);
+    const newDoc = updateNode(docCopy, previousNode, newNode);
+
+    setEditor((prev) => ({
+      ...prev,
+      doc: newDoc,
+      cursor: { ...prev.cursor, x: cursorX - 1, anchorX: cursorX - 1 },
+      currentNode: newNode,
+    }));
+
+    const result = documentResolver(newDoc, true).flat(Infinity);
+    setEditorView(result);
+
+    const char = previousNode.content ? previousNode.content[cursorX - 1] : "";
+    moveCaret(char, Keys.ArrowLeft, newNode.type);
   }
 
   function handleSelection(e: MouseEvent) {
@@ -388,9 +428,6 @@ function App() {
       content = newNode.content;
       if (!content) return;
       newPosition = content.length;
-
-      console.log("previous Node");
-      console.log(previousNode, char, newPosition);
     } else if (direction === Keys.ArrowRight && x + 1 > content.length) {
       const nextNode = findNextNode(editor.doc, editor.currentNode?.id);
       if (!nextNode) return;
@@ -403,9 +440,6 @@ function App() {
       // Cursor index starts from 1
       newPosition = 1;
       char = content[0];
-
-      console.log("next Node");
-      console.log(nextNode, char, newPosition);
     }
 
     setEditor((prev) => ({
