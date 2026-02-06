@@ -3,6 +3,7 @@ import type { Editor } from "./types/Editor.ts";
 import {
   addCharToNode,
   documentResolver,
+  documentResolverV2,
   findNextNode,
   findNodeFromId,
   findPreviousNode,
@@ -14,7 +15,7 @@ import type { JSX } from "react";
 import { Fragment, useEffect, useRef, useState } from "react";
 import { useHotkeys } from "react-hotkeys-hook";
 import { Keys } from "./types/Keys.ts";
-import { NodeTypes } from "./types/Node.ts";
+import { NodeTypes, type Node } from "./types/Node.ts";
 
 const editorDefault: Editor = {
   doc: {
@@ -33,25 +34,25 @@ const editorDefault: Editor = {
                 type: NodeTypes.parapagh,
                 content: "1st sub sub sub text",
                 children: [],
-                isInline: true,
+                isText: true,
               },
             ],
-            isInline: true,
+            isText: true,
           },
           {
             type: NodeTypes.bold,
             content: "boldie",
             children: [],
-            isInline: true,
+            isText: true,
           },
           {
             type: NodeTypes.parapagh,
             content: "aftr boldie",
             children: [],
-            isInline: true,
+            isText: true,
           },
         ],
-        isInline: true,
+        isText: true,
       },
       {
         type: NodeTypes.bold,
@@ -61,17 +62,17 @@ const editorDefault: Editor = {
             type: NodeTypes.parapagh,
             content: "2nd sub node text",
             children: [],
-            isInline: true,
+            isText: true,
           },
         ],
-        isInline: true,
+        isText: true,
       },
       {
         type: NodeTypes.parapagh,
         content: "3rd",
         children: [],
 
-        isInline: true,
+        isText: true,
       },
       {
         type: NodeTypes.listParent,
@@ -81,25 +82,25 @@ const editorDefault: Editor = {
             type: NodeTypes.listChild,
             content: "hi i am child number 1",
             children: [],
-            isInline: false,
+            isText: false,
           },
           {
             type: NodeTypes.listChild,
             content: "hi i am child number 2",
             children: [],
-            isInline: false,
+            isText: false,
           },
           {
             type: NodeTypes.listChild,
             content: "hi i am child number 3",
             children: [],
-            isInline: false,
+            isText: false,
           },
         ],
-        isInline: false,
+        isText: false,
       },
     ],
-    isInline: true,
+    isText: true,
   },
   cursor: {
     x: 0,
@@ -152,9 +153,14 @@ function App() {
       handleSelection(e);
     });
 
-    return document.removeEventListener("click", () => {
-      console.warn("removed event");
-    });
+    return () => {
+      document.removeEventListener("mousedown", () => {
+        console.warn("removed mousedown event");
+      });
+      document.removeEventListener("mouseup", () => {
+        console.warn("removed mouseup event");
+      });
+    };
   }, []);
 
   useEffect(() => {
@@ -170,6 +176,8 @@ function App() {
     const nodeRect = caret?.getClientRect() || { x: 0, y: 0 };
 
     setCaret({ x: nodeRect.x, y: nodeRect.y });
+
+    console.log(caret?.offsetNode.parentElement?.previousSibling);
 
     const id = caret?.offsetNode.parentElement?.id;
     const results = findNodeFromId(editorRef.current.doc, [], id);
@@ -506,6 +514,122 @@ function App() {
     setCaret({ x: width, y: boundingClientRect.y });
   }
 
+  const testdoc: Node = {
+    type: NodeTypes.start,
+    content: "",
+    isText: true,
+    children: [
+      {
+        type: NodeTypes.parent,
+        content: "",
+        children: [
+          {
+            type: NodeTypes.parapagh,
+            content: "hi ",
+            children: [],
+            isText: true,
+          },
+          {
+            type: NodeTypes.parapagh,
+            content: "is bold ",
+            children: [],
+            isText: true,
+            styling: ["bold"],
+          },
+          {
+            type: NodeTypes.parapagh,
+            content: "yup",
+            children: [],
+            isText: true,
+          },
+        ],
+        isText: true,
+      },
+      {
+        type: NodeTypes.parent,
+        content: "",
+        children: [
+          {
+            type: NodeTypes.listChild,
+            content: "hi i am child number 1",
+            children: [],
+            isText: false,
+          },
+          {
+            type: NodeTypes.listChild,
+            content: "",
+            children: [
+              {
+                type: NodeTypes.parapagh,
+                content: "hi ",
+                children: [],
+                isText: false,
+              },
+              {
+                type: NodeTypes.parapagh,
+                content: "i am",
+                children: [],
+                styling: ["bold"],
+                isText: false,
+              },
+              {
+                type: NodeTypes.parapagh,
+                content: " an italic Textu ",
+                children: [],
+                styling: ["italic"],
+                isText: false,
+              },
+              {
+                type: NodeTypes.parapagh,
+                content: " child number 2",
+                children: [],
+                isText: false,
+              },
+            ],
+            isText: false,
+            isList: true,
+          },
+          {
+            type: NodeTypes.listChild,
+            content: "hi i am child number 3",
+            children: [],
+            isText: false,
+          },
+        ],
+        isText: false,
+        isList: true,
+      },
+      {
+        type: NodeTypes.parent,
+        content: "",
+        children: [
+          {
+            type: NodeTypes.parapagh,
+            content: "zp1 ",
+            children: [],
+            isText: true,
+          },
+          {
+            type: NodeTypes.parapagh,
+            content: "bold p2 ",
+            children: [],
+            styling: ["bold"],
+            isText: true,
+          },
+          {
+            type: NodeTypes.parapagh,
+            content: "3rd",
+            children: [],
+            isText: true,
+          },
+        ],
+        isText: true,
+      },
+    ],
+  };
+
+  const a = documentResolverV2(testdoc);
+  // console.log(a);
   return (
     <div className="no-select cursor-text editor">
       <div
@@ -522,11 +646,12 @@ function App() {
           height: 300,
         }}
       />
-      {editorView?.map((Element, index) => (
-        <Fragment key={index}>{Element}</Fragment>
-      ))}
+      {a}
     </div>
   );
+  // <p>
+  //   hello <strong>this</strong> is bold
+  // </p>
 }
 
 export default App;
