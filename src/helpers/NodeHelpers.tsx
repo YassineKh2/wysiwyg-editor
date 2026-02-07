@@ -47,24 +47,40 @@ export function documentResolver(doc: Node, keepId?: boolean): JSX.Element[] {
 }
 
 export function documentResolverV2(doc: Node, keepId?: boolean) {
+  if (!keepId) doc.id = Math.random().toString(36).substring(2, 15);
+
   if (doc.children?.length === 0) {
-    if (doc.styling?.includes("bold")) return <strong>{doc.content}</strong>;
-    if (doc.styling?.includes("italic")) return <em>{doc.content}</em>;
+    if (doc.styling?.includes("bold"))
+      return <strong id={doc.id}>{doc.content}</strong>;
+    if (doc.styling?.includes("italic"))
+      return <em id={doc.id}>{doc.content}</em>;
     if (doc.type === NodeTypes.listChild)
-      return <li className="list-disc list-inside">{doc.content}</li>;
+      return (
+        <li id={doc.id} className="list-disc list-inside">
+          {doc.content}
+        </li>
+      );
     else return doc.content;
   }
 
   let p;
   if (doc.isText && doc.type === NodeTypes.parent) {
-    p = <p>{doc.children.map((child) => documentResolverV2(child))}</p>;
+    p = (
+      <p id={doc.id}>
+        {doc.children.map((child) => documentResolverV2(child))}
+      </p>
+    );
   }
   if (doc.isList && doc.type === NodeTypes.parent) {
-    p = <ul>{doc.children.map((child) => documentResolverV2(child))}</ul>;
+    p = (
+      <ul id={doc.id}>
+        {doc.children.map((child) => documentResolverV2(child))}
+      </ul>
+    );
   }
   if (doc.isList && doc.type === NodeTypes.listChild) {
     p = (
-      <li className="list-disc list-inside">
+      <li id={doc.id} className="list-disc list-inside">
         {doc.children.map((child) => documentResolverV2(child))}
       </li>
     );
