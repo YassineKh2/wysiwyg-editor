@@ -179,3 +179,13 @@ export function removeNode(doc: Node, id?: string) {
 
   return [doc];
 }
+
+export function getNodeFromPreviousNode(
+  node: Node,
+  previousNodeId: string,
+  foundNextNode: boolean,
+) {
+  if (foundNextNode) return node;
+  if (node.id === previousNodeId)
+    getNodeFromPreviousNode(node, previousNodeId, true);
+}

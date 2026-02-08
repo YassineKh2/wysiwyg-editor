@@ -8,4 +8,5 @@ export interface Editor {
     anchorX: number;
   };
   currentNode: Node | null;
+  previousNodeId: string | null;
 }

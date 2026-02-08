@@ -146,6 +146,7 @@ const editorDefault: Editor = {
     anchorX: 0,
   },
   currentNode: null,
+  previousNodeId: null,
 };
 
 interface selectionType {
@@ -229,10 +230,14 @@ function App() {
   function handleMouseClick(x: number, y: number) {
     const caret = document.caretPositionFromPoint(x, y);
     const nodeRect = caret?.getClientRect() || { x: 0, y: 0 };
+    const offsetNode = caret?.offsetNode as Element;
+
+    console.log(caret);
 
     setCaret({ x: nodeRect.x, y: nodeRect.y });
 
-    const id = caret?.offsetNode.parentElement?.id;
+    const id = offsetNode.parentElement?.id;
+    const previousNodeId = offsetNode.previousElementSibling?.id || null;
     const results = findNodeFromId(editorRef.current.doc, [], id);
     const node = results ? results[0] : null;
     const offset = caret?.offset || 0;
@@ -241,6 +246,7 @@ function App() {
       ...prev,
       cursor: { ...prev.cursor, x: offset, anchorX: offset },
       currentNode: node,
+      previousNodeId,
     }));
   }
 
@@ -290,49 +296,17 @@ function App() {
   }
 
   function moveWithArrowCursor(direction: Keys) {
-    let content = editor.currentNode?.content;
-    let newNode = editor.currentNode;
+    const content = editor.currentNode?.content;
+    const currentNode = editor.currentNode;
+    if (!currentNode) return;
 
-    console.log(content, newNode);
+    // Look for text in child
+    if (currentNode.type === NodeTypes.parapagh) return;
 
-    if (!content || !newNode) return;
-
-    let type = newNode.type;
     const x = editor.cursor.x;
 
-    let newPosition = direction === Keys.ArrowRight ? x + 1 : x - 1;
-    const pos = direction === Keys.ArrowRight ? x : x - 1;
-    let char = content[pos];
-
-    if (direction === Keys.ArrowLeft && x - 1 == 0) {
-      const previousNode = findPreviousNode(editor.doc, editor.currentNode?.id);
-      if (!previousNode) return;
-
-      newNode = previousNode.node;
-      content = newNode.content;
-      if (!content) return;
-      newPosition = content.length;
-    } else if (direction === Keys.ArrowRight && x + 1 > content.length) {
-      const nextNode = findNextNode(editor.doc, editor.currentNode?.id);
-      if (!nextNode) return;
-
-      newNode = nextNode.node;
-      content = newNode.content;
-      if (!content) return;
-
-      type = newNode.type;
-      // Cursor index starts from 1
-      newPosition = 1;
-      char = content[0];
-    }
-
-    setEditor((prev) => ({
-      ...prev,
-      cursor: { ...prev.cursor, x: newPosition, anchorX: newPosition },
-      currentNode: newNode,
-    }));
-
-    moveCaret(char, direction, type);
+    let cursorPosition = direction === Keys.ArrowRight ? x + 1 : x - 1;
+    const contentPos = direction === Keys.ArrowRight ? x : x - 1;
   }
 
   function moveCaret(char: string, direction: Keys, type: NodeTypes) {
