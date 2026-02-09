@@ -5,6 +5,7 @@ import {
   findNextNode,
   findNodeFromId,
   findPreviousNode,
+  getNodeFromPreviousNode,
 } from "./helpers/NodeHelpers.tsx";
 import type { JSX } from "react";
 import { useEffect, useRef, useState } from "react";
@@ -301,6 +302,12 @@ function App() {
     if (!currentNode) return;
 
     // Look for text in child
+    const node = getNodeFromPreviousNode(
+      editor.doc,
+      editor.previousNodeId || "",
+      undefined,
+    );
+    console.log(node);
     if (currentNode.type === NodeTypes.parapagh) return;
 
     const x = editor.cursor.x;

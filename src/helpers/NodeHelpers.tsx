@@ -181,11 +181,21 @@ export function removeNode(doc: Node, id?: string) {
 }
 
 export function getNodeFromPreviousNode(
-  node: Node,
+  doc: Node,
   previousNodeId: string,
-  foundNextNode: boolean,
-) {
-  if (foundNextNode) return node;
-  if (node.id === previousNodeId)
-    getNodeFromPreviousNode(node, previousNodeId, true);
+  previousNode: Node | undefined,
+): Node | null {
+  if (previousNode?.id === previousNodeId) {
+    return doc;
+  }
+  for (let i = 0; i < doc.children.length; i++) {
+    const found = getNodeFromPreviousNode(
+      doc.children[i],
+      previousNodeId,
+      doc.children[i - 1],
+    );
+    if (found) return found;
+  }
+
+  return null;
 }
