@@ -298,17 +298,17 @@ function App() {
 
   function moveWithArrowCursor(direction: Keys) {
     const content = editor.currentNode?.content;
-    const currentNode = editor.currentNode;
+    let currentNode = editor.currentNode;
     if (!currentNode) return;
 
     // Look for text in child
-    const node = getNodeFromPreviousNode(
-      editor.doc,
-      editor.previousNodeId || "",
-      undefined,
-    );
-    console.log(node);
-    if (currentNode.type === NodeTypes.parapagh) return;
+    if (currentNode.type === NodeTypes.parapagh)
+      currentNode = getNodeFromPreviousNode(
+        editor.doc,
+        editor.previousNodeId || "",
+        undefined,
+      );
+    console.log(currentNode);
 
     const x = editor.cursor.x;
 
