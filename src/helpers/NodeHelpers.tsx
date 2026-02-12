@@ -1,59 +1,32 @@
+import type { JSX } from "react";
 import type { Node } from "../types/Node.ts";
 import { NodeTypes } from "../types/Node.ts";
-import type { JSX } from "react";
 
-// Takes a document and returns the HTML Part
-export function parseDoc(doc: Node) {
-  switch (doc.type) {
-    case NodeTypes.parapagh:
-      return <p id={doc.id}>{doc.content}</p>;
+function parseDoc(
+  children?: string | JSX.Element,
+  style?: string,
+  id?: string,
+) {
+  switch (style) {
+    case "bold":
+      return <strong id={id}>{children}</strong>;
 
-    case NodeTypes.bold:
-      return <strong id={doc.id}>{doc.content}</strong>;
+    case "italic":
+      return <em id={id}>{children}</em>;
 
-    case NodeTypes.image:
-      return <img id={doc.id} src={doc.content as string} alt={"image"} />;
-
-    case NodeTypes.listParent:
-      return <ol id={doc.id}>{doc.content}</ol>;
-
-    case NodeTypes.listChild:
-      return (
-        <li className="list-disc list-inside" id={doc.id}>
-          {doc.content}
-        </li>
-      );
+    case "sup":
+      return <sup id={id}>{children}</sup>;
 
     default:
-      return <div id={doc.id}></div>;
+      return <p id={id}>{children}</p>;
   }
 }
 
-// TODO Fix this it should not be returning nested arrays
-export function documentResolver(doc: Node, keepId?: boolean): JSX.Element[] {
-  if (!keepId) doc.id = Math.random().toString(36).substring(2, 15);
-
-  if (!doc.children) return [parseDoc(doc)];
-
-  const result: JSX.Element[] = [];
-  doc.children.forEach((childDoc) => {
-    // @ts-expect-error TODO typing
-    result.push(documentResolver(childDoc, keepId));
-  });
-
-  result.push(parseDoc(doc));
-
-  return result;
-}
-
-export function documentResolverV2(doc: Node, keepId?: boolean) {
+export function documentResolver(doc: Node, keepId?: boolean) {
   if (!keepId) doc.id = Math.random().toString(36).substring(2, 15);
 
   if (doc.children?.length === 0) {
-    if (doc.styling?.includes("bold"))
-      return <strong id={doc.id}>{doc.content}</strong>;
-    if (doc.styling?.includes("italic"))
-      return <em id={doc.id}>{doc.content}</em>;
+    if (doc.styling) return ApplyStyles(doc.content || "", doc.styling, doc.id);
     if (doc.type === NodeTypes.listChild)
       return (
         <li id={doc.id} className="list-disc list-inside">
@@ -66,28 +39,38 @@ export function documentResolverV2(doc: Node, keepId?: boolean) {
   let p;
   if (doc.isText && doc.type === NodeTypes.parent) {
     p = (
-      <p id={doc.id}>
-        {doc.children.map((child) => documentResolverV2(child))}
-      </p>
+      <p id={doc.id}>{doc.children.map((child) => documentResolver(child))}</p>
     );
   }
   if (doc.isList && doc.type === NodeTypes.parent) {
     p = (
       <ul id={doc.id}>
-        {doc.children.map((child) => documentResolverV2(child))}
+        {doc.children.map((child) => documentResolver(child))}
       </ul>
     );
   }
   if (doc.isList && doc.type === NodeTypes.listChild) {
     p = (
       <li id={doc.id} className="list-disc list-inside">
-        {doc.children.map((child) => documentResolverV2(child))}
+        {doc.children.map((child) => documentResolver(child))}
       </li>
     );
   }
 
   if (doc.type === NodeTypes.start) {
-    p = <div>{doc.children.map((child) => documentResolverV2(child))}</div>;
+    p = <div>{doc.children.map((child) => documentResolver(child))}</div>;
+  }
+
+  function ApplyStyles(
+    content: string,
+    styles: string[],
+    id?: string,
+  ): JSX.Element {
+    console.log("id", id);
+    if (styles.length === 1) return parseDoc(content, styles[0], id);
+
+    const style = styles.pop();
+    return parseDoc(ApplyStyles(content, styles), style, id);
   }
 
   return p;

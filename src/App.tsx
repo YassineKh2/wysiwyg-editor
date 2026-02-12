@@ -1,7 +1,7 @@
 import "./App.css";
 import type { Editor } from "./types/Editor.ts";
 import {
-  documentResolverV2,
+  documentResolver,
   findNextNode,
   findNodeFromId,
   findPreviousNode,
@@ -78,6 +78,13 @@ const editorDefault: Editor = {
                 content: " an italic Textu ",
                 children: [],
                 styling: ["italic"],
+                isText: false,
+              },
+              {
+                type: NodeTypes.parapagh,
+                content: " an Boldeuuu and italic Textu and suuuuup",
+                children: [],
+                styling: ["bold", "italic"],
                 isText: false,
               },
               {
@@ -180,7 +187,7 @@ function App() {
   useHotkeys("*", (key) => handleKeyPress(key));
 
   useEffect(() => {
-    const result = documentResolverV2(editor.doc);
+    const result = documentResolver(editor.doc);
     setEditorView(result);
 
     document.addEventListener("mousedown", (e: MouseEvent) => {
@@ -297,7 +304,6 @@ function App() {
   }
 
   function moveWithArrowCursor(direction: Keys) {
-    const content = editor.currentNode?.content;
     let currentNode = editor.currentNode;
     if (!currentNode) return;
 
@@ -308,7 +314,6 @@ function App() {
         editor.previousNodeId || "",
         undefined,
       );
-    console.log(currentNode);
 
     const x = editor.cursor.x;
 
