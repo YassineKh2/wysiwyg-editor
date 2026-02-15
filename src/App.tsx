@@ -84,7 +84,7 @@ const editorDefault: Editor = {
                 type: NodeTypes.parapagh,
                 content: " an Boldeuuu and italic Textu and suuuuup",
                 children: [],
-                styling: ["bold", "italic"],
+                styling: ["bold", "sup", "italic"],
                 isText: false,
               },
               {
@@ -240,11 +240,16 @@ function App() {
     const nodeRect = caret?.getClientRect() || { x: 0, y: 0 };
     const offsetNode = caret?.offsetNode as Element;
 
-    console.log(caret);
-
     setCaret({ x: nodeRect.x, y: nodeRect.y });
 
-    const id = offsetNode.parentElement?.id;
+    let id = offsetNode.parentElement?.id;
+    if (!id) id = offsetNode.parentElement?.closest(".parent")?.id;
+
+    if (!id) {
+      console.warn("no id found for clicked element");
+      return;
+    }
+
     const previousNodeId = offsetNode.previousElementSibling?.id || null;
     const results = findNodeFromId(editorRef.current.doc, [], id);
     const node = results ? results[0] : null;
@@ -314,6 +319,8 @@ function App() {
         editor.previousNodeId || "",
         undefined,
       );
+
+    console.log(currentNode);
 
     const x = editor.cursor.x;
 

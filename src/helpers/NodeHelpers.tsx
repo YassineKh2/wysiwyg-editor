@@ -6,27 +6,58 @@ function parseDoc(
   children?: string | JSX.Element,
   style?: string,
   id?: string,
+  isParent?: boolean,
 ) {
   switch (style) {
     case "bold":
-      return <strong id={id}>{children}</strong>;
+      return (
+        <strong className={isParent ? "parent" : ""} id={id}>
+          {children}
+        </strong>
+      );
 
     case "italic":
-      return <em id={id}>{children}</em>;
+      return (
+        <em className={isParent ? "parent" : ""} id={id}>
+          {children}
+        </em>
+      );
 
     case "sup":
-      return <sup id={id}>{children}</sup>;
+      return (
+        <sup className={isParent ? "parent" : ""} id={id}>
+          {children}
+        </sup>
+      );
 
     default:
-      return <p id={id}>{children}</p>;
+      return (
+        <p className={isParent ? "parent" : ""} id={id}>
+          {children}
+        </p>
+      );
   }
 }
 
 export function documentResolver(doc: Node, keepId?: boolean) {
+  const ApplyStyles = (
+    content: string,
+    styles: string[],
+    id?: string,
+    isParent?: boolean,
+  ): JSX.Element => {
+    if (styles.length === 1) return parseDoc(content, styles[0], id, isParent);
+
+    const style = styles.pop();
+    const element = ApplyStyles(content, styles);
+    return parseDoc(element, style, id, isParent);
+  };
+
   if (!keepId) doc.id = Math.random().toString(36).substring(2, 15);
 
   if (doc.children?.length === 0) {
-    if (doc.styling) return ApplyStyles(doc.content || "", doc.styling, doc.id);
+    if (doc.styling)
+      return ApplyStyles(doc.content || "", doc.styling, doc.id, true);
     if (doc.type === NodeTypes.listChild)
       return (
         <li id={doc.id} className="list-disc list-inside">
@@ -59,18 +90,6 @@ export function documentResolver(doc: Node, keepId?: boolean) {
 
   if (doc.type === NodeTypes.start) {
     p = <div>{doc.children.map((child) => documentResolver(child))}</div>;
-  }
-
-  function ApplyStyles(
-    content: string,
-    styles: string[],
-    id?: string,
-  ): JSX.Element {
-    console.log("id", id);
-    if (styles.length === 1) return parseDoc(content, styles[0], id);
-
-    const style = styles.pop();
-    return parseDoc(ApplyStyles(content, styles), style, id);
   }
 
   return p;
