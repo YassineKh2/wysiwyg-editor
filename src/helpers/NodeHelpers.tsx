@@ -2,7 +2,7 @@ import type { JSX } from "react";
 import type { Node } from "../types/Node.ts";
 import { NodeTypes } from "../types/Node.ts";
 
-function parseDoc(
+export function parseDoc(
   children?: string | JSX.Element,
   style?: string,
   id?: string,
@@ -48,8 +48,9 @@ export function documentResolver(doc: Node, keepId?: boolean) {
   ): JSX.Element => {
     if (styles.length === 1) return parseDoc(content, styles[0], id, isParent);
 
-    const style = styles.pop();
-    const element = ApplyStyles(content, styles);
+    const stylesCopy = [...styles];
+    const style = stylesCopy.pop();
+    const element = ApplyStyles(content, stylesCopy);
     return parseDoc(element, style, id, isParent);
   };
 

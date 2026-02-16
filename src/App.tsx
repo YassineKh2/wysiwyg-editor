@@ -313,23 +313,56 @@ function App() {
     if (!currentNode) return;
 
     // Look for text in child
-    if (currentNode.type === NodeTypes.parapagh)
-      currentNode = getNodeFromPreviousNode(
-        editor.doc,
-        editor.previousNodeId || "",
-        undefined,
-      );
-
-    console.log(currentNode);
+    const result = getNodeFromPreviousNode(
+      editor.doc,
+      editor.previousNodeId || "",
+      undefined,
+    );
+    // If result is null we already have the node , otherwise get the current node
+    currentNode = result ? result : currentNode;
+    let content = currentNode.content;
+    let styling = currentNode.styling;
+    if (!content) return;
 
     const x = editor.cursor.x;
 
     let cursorPosition = direction === Keys.ArrowRight ? x + 1 : x - 1;
     const contentPos = direction === Keys.ArrowRight ? x : x - 1;
+    let char = content[contentPos];
+
+    if (direction === Keys.ArrowLeft && x - 1 == 0) {
+      const previousNode = findPreviousNode(editor.doc, editor.currentNode?.id);
+      if (!previousNode) return;
+
+      currentNode = previousNode.node;
+      content = currentNode.content;
+      if (!content) return;
+      cursorPosition = content.length;
+    } else if (direction === Keys.ArrowRight && x + 1 > content.length) {
+      const nextNode = findNextNode(editor.doc, editor.currentNode?.id);
+      if (!nextNode) return;
+
+      currentNode = nextNode.node;
+      content = currentNode.content;
+      if (!content) return;
+
+      styling = currentNode.styling;
+      // Cursor index starts from 1
+      cursorPosition = 1;
+      char = content[0];
+    }
+
+    setEditor((prev) => ({
+      ...prev,
+      cursor: { ...prev.cursor, x: cursorPosition, anchorX: cursorPosition },
+      currentNode: currentNode,
+    }));
+
+    moveCaret(char, direction, styling || []);
   }
 
-  function moveCaret(char: string, direction: Keys, type: NodeTypes) {
-    const charWidth = getCharWidth(char, type);
+  function moveCaret(char: string, direction: Keys, styling: string[]) {
+    const charWidth = getCharWidth(char, styling);
     const newPosition =
       direction === Keys.ArrowRight ? caret.x + charWidth : caret.x - charWidth;
 

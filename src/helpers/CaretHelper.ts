@@ -1,23 +1,46 @@
 import { Keys } from "../types/Keys";
 
-export function getCharWidth(char: string, styling: string) {
+export function getCharWidth(char: string, styling: string[]) {
   // Replace spaces by their HTML Code
   char = char === Keys.Space ? "&nbsp;" : char;
 
-  let span;
-  switch (styling) {
+  const stylingCopy = [...styling];
+
+  let element;
+  const style = stylingCopy.pop();
+  switch (style) {
     case "bold":
-      span = document.createElement("strong");
+      element = document.createElement("strong");
       break;
-    case "itatlic":
-      span = document.createElement("em");
+    case "italic":
+      element = document.createElement("em");
+      break;
+    case "sup":
+      element = document.createElement("sup");
       break;
     default:
-      span = document.createElement("span");
+      element = document.createElement("span");
   }
-  span.innerHTML = char;
-  document.body.appendChild(span);
-  const boundingClientRect = span.getBoundingClientRect();
-  document.body.removeChild(span);
+
+  for (const style in stylingCopy) {
+    switch (style) {
+      case "bold":
+        element.append(document.createElement("strong"));
+        break;
+      case "italic":
+        element.append(document.createElement("em"));
+        break;
+      case "sup":
+        element.append(document.createElement("em"));
+        break;
+      default:
+        element.append(document.createElement("span"));
+    }
+  }
+
+  element.innerHTML = char;
+  document.body.appendChild(element);
+  const boundingClientRect = element.getBoundingClientRect();
+  document.body.removeChild(element);
   return boundingClientRect.width;
 }
