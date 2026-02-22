@@ -373,7 +373,7 @@ function App() {
     <div className="no-select cursor-text editor">
       <div
         id="caret"
-        className="bg-black px-0 py-2.5 w-0.5 h-1 absolute"
+        className="bg-black px-0 py-2.5 w-0.25 h-1 absolute"
         style={{ left: `${caret.x}px`, top: `${caret.y}px` }}
       />
       <div

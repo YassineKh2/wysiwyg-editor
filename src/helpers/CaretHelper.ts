@@ -4,43 +4,43 @@ export function getCharWidth(char: string, styling: string[]) {
   // Replace spaces by their HTML Code
   char = char === Keys.Space ? "&nbsp;" : char;
 
-  const stylingCopy = [...styling];
-
-  let element;
-  const style = stylingCopy.pop();
-  switch (style) {
-    case "bold":
-      element = document.createElement("strong");
-      break;
-    case "italic":
-      element = document.createElement("em");
-      break;
-    case "sup":
-      element = document.createElement("sup");
-      break;
-    default:
-      element = document.createElement("span");
-  }
-
-  for (const style in stylingCopy) {
-    switch (style) {
-      case "bold":
-        element.append(document.createElement("strong"));
-        break;
-      case "italic":
-        element.append(document.createElement("em"));
-        break;
-      case "sup":
-        element.append(document.createElement("em"));
-        break;
-      default:
-        element.append(document.createElement("span"));
+  const elements = [];
+  if (styling.length)
+    for (const style of styling) {
+      switch (style) {
+        case "bold":
+          elements.push(document.createElement("strong"));
+          break;
+        case "italic":
+          elements.push(document.createElement("em"));
+          break;
+        case "sup":
+          elements.push(document.createElement("sup"));
+          break;
+        default:
+          elements.push(document.createElement("span"));
+      }
     }
+  else {
+    elements.push(document.createElement("span"));
   }
 
-  element.innerHTML = char;
-  document.body.appendChild(element);
-  const boundingClientRect = element.getBoundingClientRect();
-  document.body.removeChild(element);
+  console.log(elements);
+
+  let currentElement = elements[0];
+  for (let i = 0; i < elements.length; i++) {
+    if (i === 0) {
+      currentElement.innerHTML = char;
+      continue;
+    }
+    const newElement = elements[i];
+    newElement.append(currentElement);
+    currentElement = newElement;
+  }
+
+  console.log(currentElement);
+  document.body.appendChild(currentElement);
+  const boundingClientRect = currentElement.getBoundingClientRect();
+  document.body.removeChild(currentElement);
   return boundingClientRect.width;
 }
