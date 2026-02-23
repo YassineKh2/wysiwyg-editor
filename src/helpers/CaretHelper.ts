@@ -25,8 +25,6 @@ export function getCharWidth(char: string, styling: string[]) {
     elements.push(document.createElement("span"));
   }
 
-  console.log(elements);
-
   let currentElement = elements[0];
   for (let i = 0; i < elements.length; i++) {
     if (i === 0) {
@@ -38,7 +36,6 @@ export function getCharWidth(char: string, styling: string[]) {
     currentElement = newElement;
   }
 
-  console.log(currentElement);
   document.body.appendChild(currentElement);
   const boundingClientRect = currentElement.getBoundingClientRect();
   document.body.removeChild(currentElement);

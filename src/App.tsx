@@ -11,14 +11,13 @@ import type { JSX } from "react";
 import { useEffect, useRef, useState } from "react";
 import { useHotkeys } from "react-hotkeys-hook";
 import { Keys } from "./types/Keys.ts";
-import { NodeTypes } from "./types/Node.ts";
+import { NodeTypes, type AttributeTypes } from "./types/Node.ts";
 import { getCharWidth } from "./helpers/CaretHelper.ts";
 
 const editorDefault: Editor = {
   doc: {
     type: NodeTypes.start,
     content: "",
-    isText: true,
     children: [
       {
         type: NodeTypes.parent,
@@ -28,84 +27,75 @@ const editorDefault: Editor = {
             type: NodeTypes.parapagh,
             content: "hi ",
             children: [],
-            isText: true,
           },
           {
             type: NodeTypes.parapagh,
             content: "is bold ",
             children: [],
-            isText: true,
             styling: ["bold"],
           },
           {
             type: NodeTypes.parapagh,
             content: "yup",
             children: [],
-            isText: true,
           },
         ],
-        isText: true,
+        attributes: { isText: true } as AttributeTypes,
       },
       {
         type: NodeTypes.parent,
         content: "",
         children: [
           {
-            type: NodeTypes.listChild,
+            type: NodeTypes.parapagh,
             content: "hi i am child number 1",
             children: [],
-            isText: false,
+            styling: ["bullet-list"],
           },
           {
-            type: NodeTypes.listChild,
+            type: NodeTypes.parent,
             content: "",
             children: [
               {
                 type: NodeTypes.parapagh,
                 content: "hi ",
                 children: [],
-                isText: false,
               },
               {
                 type: NodeTypes.parapagh,
                 content: "i am",
                 children: [],
                 styling: ["bold"],
-                isText: false,
               },
               {
                 type: NodeTypes.parapagh,
                 content: " an italic Textu ",
                 children: [],
                 styling: ["italic"],
-                isText: false,
               },
               {
                 type: NodeTypes.parapagh,
                 content: " an Boldeuuu and italic Textu and suuuuup",
                 children: [],
                 styling: ["bold", "sup", "italic"],
-                isText: false,
               },
               {
                 type: NodeTypes.parapagh,
                 content: " child number 2",
                 children: [],
-                isText: false,
               },
             ],
-            isText: false,
-            isList: true,
+            styling: ["bullet-list"],
+            attributes: { isChildList: true } as AttributeTypes,
           },
           {
-            type: NodeTypes.listChild,
+            type: NodeTypes.parapagh,
             content: "hi i am child number 3",
+            styling: ["bullet-list"],
             children: [],
-            isText: false,
           },
         ],
-        isText: false,
-        isList: true,
+        attributes: { isList: true } as AttributeTypes,
       },
       {
         type: NodeTypes.parent,
@@ -115,10 +105,9 @@ const editorDefault: Editor = {
             type: NodeTypes.parapagh,
             content: "sup",
             children: [],
-            isText: true,
           },
         ],
-        isText: true,
+        attributes: { isText: true } as AttributeTypes,
       },
       {
         type: NodeTypes.parent,
@@ -128,23 +117,20 @@ const editorDefault: Editor = {
             type: NodeTypes.parapagh,
             content: "zp1 ",
             children: [],
-            isText: true,
           },
           {
             type: NodeTypes.parapagh,
             content: "bold p2 ",
             children: [],
             styling: ["bold"],
-            isText: true,
           },
           {
             type: NodeTypes.parapagh,
-            content: "3rd",
+            content: "3rdddddd",
             children: [],
-            isText: true,
           },
         ],
-        isText: true,
+        attributes: { isText: true } as AttributeTypes,
       },
     ],
   },
@@ -331,10 +317,12 @@ function App() {
     let char = content[contentPos];
 
     if (direction === Keys.ArrowLeft && x - 1 == 0) {
-      const previousNode = findPreviousNode(editor.doc, editor.currentNode?.id);
+      const previousNode = findPreviousNode(editor.doc, currentNode.id!);
+
+      console.log(previousNode);
       if (!previousNode) return;
 
-      currentNode = previousNode.node;
+      currentNode = previousNode;
       content = currentNode.content;
       if (!content) return;
       cursorPosition = content.length;

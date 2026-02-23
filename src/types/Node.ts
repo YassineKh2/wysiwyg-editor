@@ -3,17 +3,18 @@ export interface Node {
   type: NodeTypes;
   content: string | null;
   children: Node[];
-  isText: boolean;
-  isList?: boolean;
+  attributes?: AttributeTypes;
   styling?: string[];
 }
 
 export enum NodeTypes {
   start = "start",
   parapagh = "parapagh",
-  bold = "bold",
   image = "image",
-  listParent = "listParent",
-  listChild = "listChild",
   parent = "parent",
 }
+export type AttributeTypes = {
+  isText: boolean;
+  isList: boolean;
+  isChildList: boolean;
+};
