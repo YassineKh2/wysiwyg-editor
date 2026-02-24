@@ -205,7 +205,7 @@ export function getNodeFromPreviousNode(
 export function findPreviousNode(doc: Node, currentNodeId: string) {
   let previousNode: Node | null = null;
 
-  const findNode = (node: Node) => {
+  const findNode: (node: Node) => Node | null = (node: Node) => {
     if (node.id === currentNodeId) return previousNode;
     if (node.type !== NodeTypes.parent) previousNode = node;
 

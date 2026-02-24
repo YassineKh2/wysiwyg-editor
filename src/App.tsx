@@ -307,7 +307,6 @@ function App() {
     // If result is null we already have the node , otherwise get the current node
     currentNode = result ? result : currentNode;
     let content = currentNode.content;
-    let styling = currentNode.styling;
     if (!content) return;
 
     const x = editor.cursor.x;
@@ -316,15 +315,14 @@ function App() {
     const contentPos = direction === Keys.ArrowRight ? x : x - 1;
     let char = content[contentPos];
 
-    if (direction === Keys.ArrowLeft && x - 1 == 0) {
+    if (direction === Keys.ArrowLeft && x - 1 === 0) {
       const previousNode = findPreviousNode(editor.doc, currentNode.id!);
-
-      console.log(previousNode);
       if (!previousNode) return;
 
       currentNode = previousNode;
       content = currentNode.content;
       if (!content) return;
+
       cursorPosition = content.length;
     } else if (direction === Keys.ArrowRight && x + 1 > content.length) {
       const nextNode = findNextNode(editor.doc, editor.currentNode?.id);
@@ -333,20 +331,20 @@ function App() {
       currentNode = nextNode.node;
       content = currentNode.content;
       if (!content) return;
-
-      styling = currentNode.styling;
       // Cursor index starts from 1
       cursorPosition = 1;
       char = content[0];
     }
 
+    console.log(char, contentPos, x);
     setEditor((prev) => ({
       ...prev,
       cursor: { ...prev.cursor, x: cursorPosition, anchorX: cursorPosition },
       currentNode: currentNode,
+      previousNodeId: null,
     }));
 
-    moveCaret(char, direction, styling || []);
+    moveCaret(char, direction, currentNode.styling || []);
   }
 
   function moveCaret(char: string, direction: Keys, styling: string[]) {
