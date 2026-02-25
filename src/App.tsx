@@ -352,7 +352,11 @@ function App() {
     const newPosition =
       direction === Keys.ArrowRight ? caret.x + charWidth : caret.x - charWidth;
 
-    setCaret((prev) => ({ ...prev, x: newPosition }));
+    const nodeRect = document
+      .caretPositionFromPoint(newPosition, caret.y)
+      ?.getClientRect();
+
+    setCaret((prev) => ({ ...prev, x: nodeRect?.x || 0 }));
   }
 
   return (
