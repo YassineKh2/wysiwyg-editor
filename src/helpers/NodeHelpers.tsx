@@ -150,16 +150,6 @@ export function findNodeInDomFromId(id?: string) {
   return document.getElementById(id);
 }
 
-export function findNextNode(doc: Node, id?: string) {
-  const nextElement = findNodeInDomFromId(id)?.nextElementSibling;
-  if (!nextElement) return;
-
-  const node = findNodeFromId(doc, [], nextElement?.id);
-  if (!node) return;
-
-  return { node: node[0], domNode: nextElement };
-}
-
 export function removeNode(doc: Node, id?: string) {
   if (doc.id === id) {
     if (doc.children?.length) return doc.children;
@@ -202,6 +192,7 @@ export function getNodeFromPreviousNode(
   return null;
 }
 
+// Only returns child nodes
 export function findPreviousNode(doc: Node, currentNodeId: string) {
   let previousNode: Node | null = null;
 
@@ -212,6 +203,29 @@ export function findPreviousNode(doc: Node, currentNodeId: string) {
     for (const child of node.children) {
       const found = findNode(child);
       if (found) return found;
+    }
+
+    return null;
+  };
+
+  return findNode(doc);
+}
+
+// Only returns child nodes
+export function findNextNode(doc: Node, currentNodeId?: string) {
+  let found = false;
+
+  const findNode: (node: Node) => Node | null = (node: Node) => {
+    if (node.id === currentNodeId) {
+      found = true;
+      return null;
+    }
+
+    if (node.type !== NodeTypes.parent && found) return node;
+
+    for (const child of node.children) {
+      const result = findNode(child);
+      if (result) return result;
     }
 
     return null;

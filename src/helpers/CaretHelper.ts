@@ -1,6 +1,6 @@
 import { Keys } from "../types/Keys";
 
-export function getCharWidth(char: string, styling: string[]) {
+export function getCharSize(char: string, styling: string[]) {
   // Replace spaces by their HTML Code
   char = char === Keys.Space ? "&nbsp;" : char;
 
@@ -39,5 +39,5 @@ export function getCharWidth(char: string, styling: string[]) {
   document.body.appendChild(currentElement);
   const boundingClientRect = currentElement.getBoundingClientRect();
   document.body.removeChild(currentElement);
-  return boundingClientRect.width;
+  return { width: boundingClientRect.width, height: boundingClientRect.height };
 }

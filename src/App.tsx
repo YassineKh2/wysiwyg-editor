@@ -12,7 +12,7 @@ import { useEffect, useRef, useState } from "react";
 import { useHotkeys } from "react-hotkeys-hook";
 import { Keys } from "./types/Keys.ts";
 import { NodeTypes, type AttributeTypes } from "./types/Node.ts";
-import { getCharWidth } from "./helpers/CaretHelper.ts";
+import { getCharSize } from "./helpers/CaretHelper.ts";
 
 const editorDefault: Editor = {
   doc: {
@@ -328,7 +328,7 @@ function App() {
       const nextNode = findNextNode(editor.doc, editor.currentNode?.id);
       if (!nextNode) return;
 
-      currentNode = nextNode.node;
+      currentNode = nextNode;
       content = currentNode.content;
       if (!content) return;
       // Cursor index starts from 1
@@ -336,7 +336,8 @@ function App() {
       char = content[0];
     }
 
-    console.log(char, contentPos, x);
+    console.log(currentNode, content, cursorPosition);
+
     setEditor((prev) => ({
       ...prev,
       cursor: { ...prev.cursor, x: cursorPosition, anchorX: cursorPosition },
@@ -348,15 +349,15 @@ function App() {
   }
 
   function moveCaret(char: string, direction: Keys, styling: string[]) {
-    const charWidth = getCharWidth(char, styling);
+    const { width, height } = getCharSize(char, styling);
     const newPosition =
-      direction === Keys.ArrowRight ? caret.x + charWidth : caret.x - charWidth;
+      direction === Keys.ArrowRight ? caret.x + width : caret.x - width;
 
     const nodeRect = document
-      .caretPositionFromPoint(newPosition, caret.y)
+      .caretPositionFromPoint(newPosition, caret.y + height)
       ?.getClientRect();
 
-    setCaret((prev) => ({ ...prev, x: nodeRect?.x || 0 }));
+    setCaret({ y: nodeRect?.y || 0, x: nodeRect?.x || 0 });
   }
 
   return (
