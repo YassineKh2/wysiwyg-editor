@@ -1,11 +1,13 @@
 import "./App.css";
 import type { Editor } from "./types/Editor.ts";
 import {
+  addCharToNode,
   documentResolver,
   findNextNode,
   findNodeFromId,
   findPreviousNode,
   getNodeFromPreviousNode,
+  updateNode,
 } from "./helpers/NodeHelpers.tsx";
 import type { JSX } from "react";
 import { useEffect, useRef, useState } from "react";
@@ -290,7 +292,7 @@ function App() {
         break;
 
       default:
-      // addCharacter(key);
+        addCharacter(key);
     }
   }
 
@@ -336,8 +338,6 @@ function App() {
       char = content[0];
     }
 
-    console.log(currentNode, content, cursorPosition);
-
     setEditor((prev) => ({
       ...prev,
       cursor: { ...prev.cursor, x: cursorPosition, anchorX: cursorPosition },
@@ -358,6 +358,35 @@ function App() {
       ?.getClientRect();
 
     setCaret({ y: nodeRect?.y || 0, x: nodeRect?.x || 0 });
+  }
+
+  function addCharacter(char: string) {
+    const { cursor, doc, currentNode } = editor;
+
+    if (!currentNode) return;
+
+    const docCopy = structuredClone(doc);
+
+    const newId = Math.random().toString(36).substring(2, 15);
+    const currentNodeCopy = structuredClone(currentNode);
+    currentNodeCopy.id = newId;
+
+    const newNode = addCharToNode(currentNodeCopy, char, cursor.x);
+    const newDoc = updateNode(docCopy, currentNode, newNode);
+
+    console.log(newDoc);
+
+    setEditor((prev) => ({
+      ...prev,
+      doc: newDoc,
+      cursor: { ...prev.cursor, x: cursor.x + 1, anchorX: cursor.x + 1 },
+      currentNode: newNode,
+    }));
+
+    const result = documentResolver(newDoc, true);
+    setEditorView(result);
+
+    moveCaret(char, Keys.ArrowRight, currentNode.styling || []);
   }
 
   return (
