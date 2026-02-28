@@ -78,13 +78,15 @@ export function documentResolver(doc: Node, keepId?: boolean) {
 
   if (isText && doc.type === NodeTypes.parent) {
     p = (
-      <p id={doc.id}>{doc.children.map((child) => documentResolver(child))}</p>
+      <p id={doc.id}>
+        {doc.children.map((child) => documentResolver(child, keepId))}
+      </p>
     );
   }
   if (isList && doc.type === NodeTypes.parent) {
     p = (
       <ul id={doc.id}>
-        {doc.children.map((child) => documentResolver(child))}
+        {doc.children.map((child) => documentResolver(child, keepId))}
       </ul>
     );
   }
@@ -92,13 +94,15 @@ export function documentResolver(doc: Node, keepId?: boolean) {
   if (isChildList && doc.type === NodeTypes.parent) {
     p = (
       <li id={doc.id} className="list-disc list-inside">
-        {doc.children.map((child) => documentResolver(child))}
+        {doc.children.map((child) => documentResolver(child, keepId))}
       </li>
     );
   }
 
   if (doc.type === NodeTypes.start) {
-    p = <div>{doc.children.map((child) => documentResolver(child))}</div>;
+    p = (
+      <div>{doc.children.map((child) => documentResolver(child, keepId))}</div>
+    );
   }
 
   return p;

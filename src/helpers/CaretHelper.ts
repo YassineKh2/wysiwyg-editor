@@ -1,11 +1,11 @@
 import { Keys } from "../types/Keys";
 
-export function getCharSize(char: string, styling: string[]) {
+export function getCharSize(char: string, styling?: string[]) {
   // Replace spaces by their HTML Code
   char = char === Keys.Space ? "&nbsp;" : char;
 
   const elements = [];
-  if (styling.length)
+  if (styling?.length)
     for (const style of styling) {
       switch (style) {
         case "bold":

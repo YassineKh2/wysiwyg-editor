@@ -298,7 +298,6 @@ function App() {
 
   function moveWithArrowCursor(direction: Keys) {
     let currentNode = editor.currentNode;
-    if (!currentNode) return;
 
     // Look for text in child
     const result = getNodeFromPreviousNode(
@@ -308,6 +307,16 @@ function App() {
     );
     // If result is null we already have the node , otherwise get the current node
     currentNode = result ? result : currentNode;
+
+    if (!currentNode) {
+      console.warn("No node found in 'moveWithArrowCursor' !");
+      return;
+    }
+
+    // If no other node was found , and we have a parent node , that means that this parent only has 1 children
+    if (currentNode.type === NodeTypes.parent)
+      currentNode = currentNode.children[0];
+
     let content = currentNode.content;
     if (!content) return;
 
@@ -345,10 +354,10 @@ function App() {
       previousNodeId: null,
     }));
 
-    moveCaret(char, direction, currentNode.styling || []);
+    moveCaret(char, direction, currentNode.styling);
   }
 
-  function moveCaret(char: string, direction: Keys, styling: string[]) {
+  function moveCaret(char: string, direction: Keys, styling?: string[]) {
     const { width, height } = getCharSize(char, styling);
     const newPosition =
       direction === Keys.ArrowRight ? caret.x + width : caret.x - width;
@@ -361,9 +370,26 @@ function App() {
   }
 
   function addCharacter(char: string) {
-    const { cursor, doc, currentNode } = editor;
+    const { cursor, doc } = editor;
 
-    if (!currentNode) return;
+    // Look for text in child
+    const prevNode = getNodeFromPreviousNode(
+      editor.doc,
+      editor.previousNodeId || "",
+      undefined,
+    );
+
+    // If result is null we already have the node , otherwise get the current node
+    let currentNode = prevNode ? prevNode : editor.currentNode;
+
+    if (!currentNode) {
+      console.warn("No node found in 'addCharacter' !");
+      return;
+    }
+
+    // If no other node was found , and we have a parent node , that means that this parent only has 1 children
+    if (currentNode.type === NodeTypes.parent)
+      currentNode = currentNode.children[0];
 
     const docCopy = structuredClone(doc);
 
@@ -374,7 +400,7 @@ function App() {
     const newNode = addCharToNode(currentNodeCopy, char, cursor.x);
     const newDoc = updateNode(docCopy, currentNode, newNode);
 
-    console.log(newDoc);
+    console.log(currentNode);
 
     setEditor((prev) => ({
       ...prev,
@@ -386,7 +412,7 @@ function App() {
     const result = documentResolver(newDoc, true);
     setEditorView(result);
 
-    moveCaret(char, Keys.ArrowRight, currentNode.styling || []);
+    moveCaret(char, Keys.ArrowRight, currentNode.styling);
   }
 
   return (
@@ -408,9 +434,6 @@ function App() {
       {editorView}
     </div>
   );
-  // <p>
-  //   hello <strong>this</strong> is bold
-  // </p>
 }
 
 export default App;
