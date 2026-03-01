@@ -10,7 +10,7 @@ import {
   updateNode,
 } from "./helpers/NodeHelpers.tsx";
 import type { JSX } from "react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useHotkeys } from "react-hotkeys-hook";
 import { Keys } from "./types/Keys.ts";
 import { NodeTypes, type AttributeTypes } from "./types/Node.ts";
@@ -153,12 +153,23 @@ interface selectionType {
   visible: boolean;
 }
 
+type CaretType = {
+  x: number;
+  y: number;
+};
+
+type CaretMovementType = {
+  char: string;
+  direction: Keys;
+  styling?: string[];
+} | null;
+
 function App() {
   const [editor, setEditor] = useState(editorDefault);
   const [editorView, setEditorView] = useState<
     string | JSX.Element | null | undefined
   >(null);
-  const [caret, setCaret] = useState({
+  const [caret, setCaret] = useState<CaretType>({
     x: editor.cursor.x,
     y: editor.cursor.y,
   });
@@ -171,6 +182,8 @@ function App() {
   });
 
   const editorRef = useRef(editor);
+
+  const caretMovement = useRef<CaretMovementType>(null);
 
   useHotkeys("*", (key) => handleKeyPress(key));
 
@@ -203,6 +216,30 @@ function App() {
   useEffect(() => {
     editorRef.current = editor;
   }, [editor]);
+
+  useLayoutEffect(() => {
+    const movement = caretMovement.current;
+    if (!movement) return;
+
+    setCaret((prev) => computeNextCaret(prev, movement));
+  }, [editor]);
+
+  function computeNextCaret(prevCaret: CaretType, movement: CaretMovementType) {
+    const { char, styling, direction } = movement!;
+    const { width, height } = getCharSize(char, styling);
+
+    const newX =
+      direction === Keys.ArrowRight ? prevCaret.x + width : prevCaret.x - width;
+
+    const nodeRect = document
+      .caretPositionFromPoint(newX, prevCaret.y + height)
+      ?.getClientRect();
+
+    return {
+      x: nodeRect?.x ?? 0,
+      y: nodeRect?.y ?? 0,
+    };
+  }
 
   function handleSelection(e: MouseEvent) {
     const caret = document.caretPositionFromPoint(e.clientX, e.clientY);
@@ -354,19 +391,11 @@ function App() {
       previousNodeId: null,
     }));
 
-    moveCaret(char, direction, currentNode.styling);
-  }
-
-  function moveCaret(char: string, direction: Keys, styling?: string[]) {
-    const { width, height } = getCharSize(char, styling);
-    const newPosition =
-      direction === Keys.ArrowRight ? caret.x + width : caret.x - width;
-
-    const nodeRect = document
-      .caretPositionFromPoint(newPosition, caret.y + height)
-      ?.getClientRect();
-
-    setCaret({ y: nodeRect?.y || 0, x: nodeRect?.x || 0 });
+    caretMovement.current = {
+      char,
+      direction,
+      styling: currentNode.styling,
+    };
   }
 
   function addCharacter(char: string) {
@@ -412,7 +441,11 @@ function App() {
     const result = documentResolver(newDoc, true);
     setEditorView(result);
 
-    moveCaret(char, Keys.ArrowRight, currentNode.styling);
+    caretMovement.current = {
+      char,
+      direction: Keys.ArrowRight,
+      styling: currentNode.styling,
+    };
   }
 
   return (
