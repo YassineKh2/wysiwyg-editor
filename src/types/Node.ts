@@ -1,5 +1,5 @@
 export interface Node {
-  id?: string;
+  id: string;
   type: NodeTypes;
   content: string | null;
   children: Node[];

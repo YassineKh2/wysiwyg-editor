@@ -1,3 +1,4 @@
+import type { CaretType, CaretMovementType } from "../types/Caret";
 import { Keys } from "../types/Keys";
 
 export function getCharSize(char: string, styling?: string[]) {
@@ -40,4 +41,24 @@ export function getCharSize(char: string, styling?: string[]) {
   const boundingClientRect = currentElement.getBoundingClientRect();
   document.body.removeChild(currentElement);
   return { width: boundingClientRect.width, height: boundingClientRect.height };
+}
+
+export function computeNextCaret(
+  prevCaret: CaretType,
+  movement: CaretMovementType,
+) {
+  const { char, styling, direction } = movement!;
+  const { width, height } = getCharSize(char, styling);
+
+  const newX =
+    direction === Keys.ArrowRight ? prevCaret.x + width : prevCaret.x - width;
+
+  const nodeRect = document
+    .caretPositionFromPoint(newX, prevCaret.y + height)
+    ?.getClientRect();
+
+  return {
+    x: nodeRect?.x ?? 0,
+    y: nodeRect?.y ?? 0,
+  };
 }

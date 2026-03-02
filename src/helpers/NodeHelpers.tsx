@@ -119,20 +119,24 @@ export function findNodeFromId(doc: Node, res: Node[], id?: string) {
   return res;
 }
 export function addCharToNode(node: Node, char: string, pos: number) {
-  const content = node.content;
+  const newNode = structuredClone(node);
+
+  const content = newNode.content;
   const s1 = content?.slice(0, pos) || "";
   const s2 = content?.slice(pos, content?.length) || "";
-  node.content = s1?.concat(char, s2);
-  return node;
+  newNode.content = s1?.concat(char, s2);
+  return newNode;
 }
 
 export function removeCharFromNode(node: Node, pos: number) {
-  const content = node.content;
+  const newNode = structuredClone(node);
+
+  const content = newNode.content;
   const position = pos - 1 > 0 ? pos - 1 : 0;
   const s1 = content?.slice(0, position) || "";
   const s2 = content?.slice(pos, content?.length) || "";
-  node.content = s1 + s2;
-  return node;
+  newNode.content = s1 + s2;
+  return newNode;
 }
 
 export function updateNode(doc: Node, oldNode: Node, newNode: Node) {
@@ -236,4 +240,27 @@ export function findNextNode(doc: Node, currentNodeId?: string) {
   };
 
   return findNode(doc);
+}
+
+export function getCurrentNode(
+  doc: Node,
+  currentNode: Node,
+  previousNodeId: string | null,
+) {
+  let node = structuredClone(currentNode);
+
+  // Look for text in child
+  const result = getNodeFromPreviousNode(doc, previousNodeId || "", undefined);
+  // If result is null we already have the node , otherwise get the current node
+  node = result ? result : node;
+
+  if (!node) {
+    console.warn("Current Node Not Found!");
+    return null;
+  }
+
+  // If no other node was found , and we have a parent node , that means that this parent only has 1 children
+  if (node.type === NodeTypes.parent) node = node.children[0];
+
+  return node;
 }

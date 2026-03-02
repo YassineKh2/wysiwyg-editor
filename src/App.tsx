@@ -6,7 +6,10 @@ import {
   findNextNode,
   findNodeFromId,
   findPreviousNode,
+  getCurrentNode,
   getNodeFromPreviousNode,
+  removeCharFromNode,
+  removeNode,
   updateNode,
 } from "./helpers/NodeHelpers.tsx";
 import type { JSX } from "react";
@@ -14,7 +17,8 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useHotkeys } from "react-hotkeys-hook";
 import { Keys } from "./types/Keys.ts";
 import { NodeTypes, type AttributeTypes } from "./types/Node.ts";
-import { getCharSize } from "./helpers/CaretHelper.ts";
+import { computeNextCaret } from "./helpers/CaretHelper.ts";
+import type { CaretType, CaretMovementType } from "./types/Caret.ts";
 
 const editorDefault: Editor = {
   doc: {
@@ -22,21 +26,25 @@ const editorDefault: Editor = {
     content: "",
     children: [
       {
+        id: "",
         type: NodeTypes.parent,
         content: "",
         children: [
           {
+            id: "",
             type: NodeTypes.parapagh,
             content: "hi ",
             children: [],
           },
           {
+            id: "",
             type: NodeTypes.parapagh,
             content: "is bold ",
             children: [],
             styling: ["bold"],
           },
           {
+            id: "",
             type: NodeTypes.parapagh,
             content: "yup",
             children: [],
@@ -45,16 +53,19 @@ const editorDefault: Editor = {
         attributes: { isText: true } as AttributeTypes,
       },
       {
+        id: "",
         type: NodeTypes.parent,
         content: "",
         children: [
           {
+            id: "",
             type: NodeTypes.parapagh,
             content: "hi i am child number 1",
             children: [],
             styling: ["bullet-list"],
           },
           {
+            id: "",
             type: NodeTypes.parent,
             content: "",
             children: [
@@ -91,6 +102,7 @@ const editorDefault: Editor = {
             attributes: { isChildList: true } as AttributeTypes,
           },
           {
+            id: "",
             type: NodeTypes.parapagh,
             content: "hi i am child number 3",
             styling: ["bullet-list"],
@@ -100,10 +112,12 @@ const editorDefault: Editor = {
         attributes: { isList: true } as AttributeTypes,
       },
       {
+        id: "",
         type: NodeTypes.parent,
         content: "",
         children: [
           {
+            id: "",
             type: NodeTypes.parapagh,
             content: "sup",
             children: [],
@@ -112,21 +126,25 @@ const editorDefault: Editor = {
         attributes: { isText: true } as AttributeTypes,
       },
       {
+        id: "",
         type: NodeTypes.parent,
         content: "",
         children: [
           {
+            id: "",
             type: NodeTypes.parapagh,
             content: "zp1 ",
             children: [],
           },
           {
+            id: "",
             type: NodeTypes.parapagh,
             content: "bold p2 ",
             children: [],
             styling: ["bold"],
           },
           {
+            id: "",
             type: NodeTypes.parapagh,
             content: "3rdddddd",
             children: [],
@@ -152,17 +170,6 @@ interface selectionType {
   endPos: number | null;
   visible: boolean;
 }
-
-type CaretType = {
-  x: number;
-  y: number;
-};
-
-type CaretMovementType = {
-  char: string;
-  direction: Keys;
-  styling?: string[];
-} | null;
 
 function App() {
   const [editor, setEditor] = useState(editorDefault);
@@ -223,23 +230,6 @@ function App() {
 
     setCaret((prev) => computeNextCaret(prev, movement));
   }, [editor]);
-
-  function computeNextCaret(prevCaret: CaretType, movement: CaretMovementType) {
-    const { char, styling, direction } = movement!;
-    const { width, height } = getCharSize(char, styling);
-
-    const newX =
-      direction === Keys.ArrowRight ? prevCaret.x + width : prevCaret.x - width;
-
-    const nodeRect = document
-      .caretPositionFromPoint(newX, prevCaret.y + height)
-      ?.getClientRect();
-
-    return {
-      x: nodeRect?.x ?? 0,
-      y: nodeRect?.y ?? 0,
-    };
-  }
 
   function handleSelection(e: MouseEvent) {
     const caret = document.caretPositionFromPoint(e.clientX, e.clientY);
@@ -302,7 +292,7 @@ function App() {
       }
       case Keys.Delete:
       case Keys.Backspace: {
-        // removeCharacter();
+        removeCharacter();
         break;
       }
       // case Keys.ArrowUp:
@@ -429,8 +419,6 @@ function App() {
     const newNode = addCharToNode(currentNodeCopy, char, cursor.x);
     const newDoc = updateNode(docCopy, currentNode, newNode);
 
-    console.log(currentNode);
-
     setEditor((prev) => ({
       ...prev,
       doc: newDoc,
@@ -444,6 +432,142 @@ function App() {
     caretMovement.current = {
       char,
       direction: Keys.ArrowRight,
+      styling: currentNode.styling,
+    };
+  }
+
+  function removeCharacter() {
+    const { cursor, doc, currentNode: node, previousNodeId } = editor;
+    if (!node) {
+      console.warn("No node found");
+      return;
+    }
+
+    const currentNode = getCurrentNode(doc, node, previousNodeId);
+    if (!currentNode) {
+      console.warn("No current node found");
+      return;
+    }
+
+    const content = currentNode?.content;
+    let moveToNextNode = false;
+
+    if (content?.length === 1) {
+      deleteNode();
+      return;
+    }
+
+    // In Between Nodes
+    if (cursor.x === 0) {
+      removeFormNextNode();
+      return;
+    }
+
+    if (cursor.x === 1) moveToNextNode = true;
+
+    const docCopy = structuredClone(doc);
+
+    const newId = Math.random().toString(36).substring(2, 15);
+    const currentNodeCopy = structuredClone(currentNode);
+    currentNodeCopy.id = newId;
+
+    let newNode = removeCharFromNode(currentNodeCopy, cursor.x);
+    const newDoc = updateNode(docCopy, currentNode, newNode);
+
+    const previousNode =
+      moveToNextNode && findPreviousNode(doc, currentNode.id);
+
+    if (previousNode) newNode = previousNode;
+
+    const newContentLength = newNode.content?.length || 1;
+    const cursorX = moveToNextNode ? newContentLength : cursor.x - 1;
+
+    setEditor((prev) => ({
+      ...prev,
+      doc: newDoc,
+      cursor: { ...prev.cursor, x: cursorX, anchorX: cursorX },
+      currentNode: newNode,
+      previousNodeId: null,
+    }));
+
+    const newDocument = documentResolver(newDoc, true);
+    setEditorView(newDocument);
+
+    const char = content[cursor.x - 1];
+
+    caretMovement.current = {
+      char,
+      direction: Keys.ArrowLeft,
+      styling: currentNode.styling,
+    };
+  }
+
+  function deleteNode() {
+    const { doc, currentNode } = editor;
+    if (!currentNode) return;
+
+    const docCopy = structuredClone(doc);
+
+    const newNode = findPreviousNode(docCopy, currentNode.id);
+    const cursorX = newNode?.content?.length || 1;
+
+    const newDoc = removeNode(docCopy, currentNode.id);
+    if (!newDoc) return;
+
+    setEditor((prev) => ({
+      ...prev,
+      doc: newDoc[0],
+      cursor: { ...prev.cursor, x: cursorX, anchorX: cursorX },
+      currentNode: newNode,
+      previousNodeId: null,
+    }));
+
+    const result = documentResolver(newDoc[0], true);
+    setEditorView(result);
+
+    const char = currentNode.content ? currentNode.content : "";
+
+    caretMovement.current = {
+      char,
+      direction: Keys.ArrowLeft,
+      styling: currentNode.styling,
+    };
+  }
+
+  function removeFormNextNode() {
+    console.log("ho");
+    const { doc, currentNode: node, previousNodeId } = editor;
+    if (!node) return;
+
+    const currentNode = getCurrentNode(doc, node, previousNodeId);
+    if (!currentNode) return;
+
+    const docCopy = structuredClone(doc);
+
+    const previousNode = findPreviousNode(docCopy, currentNode.id);
+    if (!previousNode) return;
+
+    const previousNodeCopy = structuredClone(previousNode);
+    const cursorX = previousNodeCopy?.content?.length || 1;
+
+    const newNode = removeCharFromNode(previousNodeCopy, cursorX);
+    const newDoc = updateNode(docCopy, previousNode, newNode);
+
+    setEditor((prev) => ({
+      ...prev,
+      doc: newDoc,
+      cursor: { ...prev.cursor, x: cursorX - 1, anchorX: cursorX - 1 },
+      currentNode: newNode,
+    }));
+
+    const result = documentResolver(newDoc, true);
+    setEditorView(result);
+
+    const char = previousNode.content ? previousNode.content[cursorX - 1] : "";
+
+    caretMovement.current = {
+      char,
+      direction: Keys.ArrowLeft,
       styling: currentNode.styling,
     };
   }
