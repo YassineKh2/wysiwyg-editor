@@ -8,6 +8,8 @@ import {
   findPreviousNode,
   getCurrentNode,
   getNodeFromPreviousNode,
+  getParentNode,
+  mergeNodes,
   removeCharFromNode,
   removeNode,
   updateNode,
@@ -22,6 +24,7 @@ import type { CaretType, CaretMovementType } from "./types/Caret.ts";
 
 const editorDefault: Editor = {
   doc: {
+    id: "",
     type: NodeTypes.start,
     content: "",
     children: [
@@ -70,29 +73,34 @@ const editorDefault: Editor = {
             content: "",
             children: [
               {
+                id: "",
                 type: NodeTypes.parapagh,
                 content: "hi ",
                 children: [],
               },
               {
+                id: "",
                 type: NodeTypes.parapagh,
                 content: "i am",
                 children: [],
                 styling: ["bold"],
               },
               {
+                id: "",
                 type: NodeTypes.parapagh,
                 content: " an italic Textu ",
                 children: [],
                 styling: ["italic"],
               },
               {
+                id: "",
                 type: NodeTypes.parapagh,
                 content: " an Boldeuuu and italic Textu and suuuuup",
                 children: [],
                 styling: ["bold", "sup", "italic"],
               },
               {
+                id: "",
                 type: NodeTypes.parapagh,
                 content: " child number 2",
                 children: [],
@@ -449,7 +457,7 @@ function App() {
       return;
     }
 
-    const content = currentNode?.content;
+    const content = currentNode?.content || "";
     let moveToNextNode = false;
 
     if (content?.length === 1) {
@@ -459,7 +467,7 @@ function App() {
 
     // In Between Nodes
     if (cursor.x === 0) {
-      removeFormNextNode();
+      mergeWithPreviousNode();
       return;
     }
 
@@ -534,8 +542,7 @@ function App() {
     };
   }
 
-  function removeFormNextNode() {
-    console.log("ho");
+  function mergeWithPreviousNode() {
     const { doc, currentNode: node, previousNodeId } = editor;
     if (!node) return;
 
@@ -548,9 +555,13 @@ function App() {
     if (!previousNode) return;
 
     const previousNodeCopy = structuredClone(previousNode);
+    const curParentNode = getParentNode(docCopy, currentNode.id);
+    const prevParentNode = getParentNode(docCopy, previousNode.id);
+    if (!prevParentNode || !curParentNode) return;
+
     const cursorX = previousNodeCopy?.content?.length || 1;
 
-    const newNode = removeCharFromNode(previousNodeCopy, cursorX);
+    const newNode = mergeNodes(prevParentNode, curParentNode);
     const newDoc = updateNode(docCopy, previousNode, newNode);
 
     setEditor((prev) => ({

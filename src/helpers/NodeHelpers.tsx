@@ -264,3 +264,45 @@ export function getCurrentNode(
 
   return node;
 }
+
+// Merges 2 Parent nodes into 1 parent node
+export function mergeNodes(firstNode: Node, secondNode: Node) {
+  const node = structuredClone(firstNode);
+  const nodeToMerge = structuredClone(secondNode);
+
+  const lastNodeChild = node.children[node.children.length - 1];
+  const firstNodeToMergeChild = nodeToMerge.children[0];
+
+  // If both elements are <P> tags , merge them into a single <P> tag
+  if (
+    lastNodeChild.styling?.length === 0 &&
+    firstNodeToMergeChild.styling?.length === 0
+  ) {
+    lastNodeChild.content?.concat(firstNodeToMergeChild.content || "");
+    nodeToMerge.children = nodeToMerge.children.slice(1);
+  }
+
+  nodeToMerge?.children.forEach((child) => {
+    node.children.push(child);
+  });
+
+  return node;
+}
+
+export function getParentNode(doc: Node, nodeId: string) {
+  let parentNode: Node | null = null;
+
+  const findNode: (node: Node) => Node | null = (node: Node) => {
+    if (node.id === nodeId) return parentNode;
+    if (node.type === NodeTypes.parent) parentNode = node;
+
+    for (const child of node.children) {
+      const found = findNode(child);
+      if (found) return found;
+    }
+
+    return null;
+  };
+
+  return findNode(doc);
+}
