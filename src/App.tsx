@@ -561,17 +561,22 @@ function App() {
 
     const cursorX = previousNodeCopy?.content?.length || 1;
 
+    console.log(prevParentNode, curParentNode);
+
     const newNode = mergeNodes(prevParentNode, curParentNode);
-    const newDoc = updateNode(docCopy, previousNode, newNode);
+    // const updatedNode = updateNode(docCopy, previousNode, newNode);
+
+    const newDoc = removeNode(docCopy, currentNode.id);
+    if (!newDoc) return;
 
     setEditor((prev) => ({
       ...prev,
-      doc: newDoc,
+      doc: newDoc[0],
       cursor: { ...prev.cursor, x: cursorX - 1, anchorX: cursorX - 1 },
       currentNode: newNode,
     }));
 
-    const result = documentResolver(newDoc, true);
+    const result = documentResolver(newDoc[0], true);
     setEditorView(result);
 
     const char = previousNode.content ? previousNode.content[cursorX - 1] : "";

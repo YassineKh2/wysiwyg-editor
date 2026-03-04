@@ -265,21 +265,21 @@ export function getCurrentNode(
   return node;
 }
 
-// Merges 2 Parent nodes into 1 parent node
-export function mergeNodes(firstNode: Node, secondNode: Node) {
-  const node = structuredClone(firstNode);
-  const nodeToMerge = structuredClone(secondNode);
+/* Merges 2 Nodes into 1 node
+TODO Documentation
+@Param previousNode: The previous node that we will merge in could be child node or parent
+@Param ParentNode: The parent node to be merged
+*/
+export function mergeNodes(previousNode: Node, ParentNode: Node) {
+  const node = structuredClone(previousNode);
+  const nodeToMerge = structuredClone(ParentNode);
 
-  const lastNodeChild = node.children[node.children.length - 1];
-  const firstNodeToMergeChild = nodeToMerge.children[0];
-
-  // If both elements are <P> tags , merge them into a single <P> tag
   if (
-    lastNodeChild.styling?.length === 0 &&
-    firstNodeToMergeChild.styling?.length === 0
+    node.type !== NodeTypes.parent &&
+    nodeToMerge.children.length === 1 &&
+    node.styling?.toString() === nodeToMerge.styling?.toString()
   ) {
-    lastNodeChild.content?.concat(firstNodeToMergeChild.content || "");
-    nodeToMerge.children = nodeToMerge.children.slice(1);
+    node.content?.concat(nodeToMerge.content || "");
   }
 
   nodeToMerge?.children.forEach((child) => {
