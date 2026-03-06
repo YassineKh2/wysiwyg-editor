@@ -14,6 +14,7 @@ import {
   removeNode,
   updateNode,
   findPreviousNode,
+  findPreviousAdjacentNode,
 } from "./helpers/NodeHelpers.tsx";
 import type { JSX } from "react";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
@@ -561,7 +562,7 @@ function App() {
       curParentNode.id,
     );
 
-    console.log(previousNode, currentNode);
+    findPreviousAdjacentNode(docCopy, currentNode.id, curParentNode.id);
     if (!previousNode) return;
 
     const previousNodeCopy = structuredClone(previousNode);

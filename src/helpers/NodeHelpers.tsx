@@ -259,6 +259,28 @@ export function findPreviousNode(
   return findNode(doc);
 }
 
+export function findPreviousAdjacentNode(
+  doc: Node,
+  currentNodeId: string,
+  parentId: string,
+) {
+  const currentNodeDepth = findNodeDepth(doc, currentNodeId, 0);
+
+  console.log(currentNodeDepth);
+}
+
+export function findNodeDepth(node: Node, currentNodeId: string, max: number) {
+  if (currentNodeId === node.id) return max;
+  let localMax = 0;
+  node.children.forEach((child) => {
+    const depth = findNodeDepth(child, currentNodeId, max);
+    if (depth > localMax) localMax = depth;
+  });
+
+  max = 1 + localMax;
+  return max;
+}
+
 // Only returns child nodes
 export function findNextChildNode(doc: Node, currentNodeId?: string) {
   let found = false;
