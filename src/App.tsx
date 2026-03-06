@@ -3,16 +3,17 @@ import type { Editor } from "./types/Editor.ts";
 import {
   addCharToNode,
   documentResolver,
-  findNextNode,
+  findNextChildNode,
   findNodeFromId,
-  findPreviousNode,
+  findChildPreviousNode,
   getCurrentNode,
   getNodeFromPreviousNode,
-  getParentNode,
+  findParentNode,
   mergeNodes,
   removeCharFromNode,
   removeNode,
   updateNode,
+  findPreviousNode,
 } from "./helpers/NodeHelpers.tsx";
 import type { JSX } from "react";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
@@ -362,7 +363,7 @@ function App() {
     let char = content[contentPos];
 
     if (direction === Keys.ArrowLeft && x - 1 === 0) {
-      const previousNode = findPreviousNode(editor.doc, currentNode.id!);
+      const previousNode = findChildPreviousNode(editor.doc, currentNode.id!);
       if (!previousNode) return;
 
       currentNode = previousNode;
@@ -371,7 +372,7 @@ function App() {
 
       cursorPosition = content.length;
     } else if (direction === Keys.ArrowRight && x + 1 > content.length) {
-      const nextNode = findNextNode(editor.doc, editor.currentNode?.id);
+      const nextNode = findNextChildNode(editor.doc, editor.currentNode?.id);
       if (!nextNode) return;
 
       currentNode = nextNode;
@@ -483,7 +484,7 @@ function App() {
     const newDoc = updateNode(docCopy, currentNode, newNode);
 
     const previousNode =
-      moveToNextNode && findPreviousNode(doc, currentNode.id);
+      moveToNextNode && findChildPreviousNode(doc, currentNode.id);
 
     if (previousNode) newNode = previousNode;
 
@@ -516,7 +517,7 @@ function App() {
 
     const docCopy = structuredClone(doc);
 
-    const newNode = findPreviousNode(docCopy, currentNode.id);
+    const newNode = findChildPreviousNode(docCopy, currentNode.id);
     const cursorX = newNode?.content?.length || 1;
 
     const newDoc = removeNode(docCopy, currentNode.id);
@@ -551,17 +552,26 @@ function App() {
 
     const docCopy = structuredClone(doc);
 
-    const previousNode = findPreviousNode(docCopy, currentNode.id);
+    const curParentNode = findParentNode(docCopy, currentNode.id);
+    if (!curParentNode) return;
+
+    const previousNode = findPreviousNode(
+      docCopy,
+      currentNode.id,
+      curParentNode.id,
+    );
+
+    console.log(previousNode, currentNode);
     if (!previousNode) return;
 
     const previousNodeCopy = structuredClone(previousNode);
-    const curParentNode = getParentNode(docCopy, currentNode.id);
-    const prevParentNode = getParentNode(docCopy, previousNode.id);
+
+    const prevParentNode = findParentNode(docCopy, previousNode.id);
     if (!prevParentNode || !curParentNode) return;
 
     const cursorX = previousNodeCopy?.content?.length || 1;
 
-    console.log(prevParentNode, curParentNode);
+    // console.log(prevParentNode, curParentNode);
 
     const newNode = mergeNodes(prevParentNode, curParentNode);
     // const updatedNode = updateNode(docCopy, previousNode, newNode);

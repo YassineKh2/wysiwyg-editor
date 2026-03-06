@@ -200,8 +200,7 @@ export function getNodeFromPreviousNode(
   return null;
 }
 
-// Only returns child nodes
-export function findPreviousNode(doc: Node, currentNodeId: string) {
+export function findChildPreviousNode(doc: Node, currentNodeId: string) {
   let previousNode: Node | null = null;
 
   const findNode: (node: Node) => Node | null = (node: Node) => {
@@ -219,8 +218,49 @@ export function findPreviousNode(doc: Node, currentNodeId: string) {
   return findNode(doc);
 }
 
+export function findParentNode(doc: Node, nodeId: string) {
+  let parentNode: Node | null = null;
+
+  const findNode: (node: Node) => Node | null = (node: Node) => {
+    if (node.id === nodeId) return parentNode;
+    if (node.type === NodeTypes.parent) parentNode = node;
+
+    for (const child of node.children) {
+      const found = findNode(child);
+      if (found) return found;
+    }
+
+    return null;
+  };
+
+  return findNode(doc);
+}
+
+// Returns the Node while ignoring the currentNode Parent
+export function findPreviousNode(
+  doc: Node,
+  currentNodeId: string,
+  parentId: string,
+) {
+  let previousNode: Node | null = null;
+
+  const findNode: (node: Node) => Node | null = (node: Node) => {
+    if (node.id === currentNodeId) return previousNode;
+    if (node.id !== parentId) previousNode = node;
+
+    for (const child of node.children) {
+      const found = findNode(child);
+      if (found) return found;
+    }
+
+    return null;
+  };
+
+  return findNode(doc);
+}
+
 // Only returns child nodes
-export function findNextNode(doc: Node, currentNodeId?: string) {
+export function findNextChildNode(doc: Node, currentNodeId?: string) {
   let found = false;
 
   const findNode: (node: Node) => Node | null = (node: Node) => {
@@ -277,7 +317,7 @@ export function mergeNodes(previousNode: Node, ParentNode: Node) {
   if (
     node.type !== NodeTypes.parent &&
     nodeToMerge.children.length === 1 &&
-    node.styling?.toString() === nodeToMerge.styling?.toString()
+    node.styling?.toString() === nodeToMerge.children[0].styling?.toString()
   ) {
     node.content?.concat(nodeToMerge.content || "");
   }
@@ -287,22 +327,4 @@ export function mergeNodes(previousNode: Node, ParentNode: Node) {
   });
 
   return node;
-}
-
-export function getParentNode(doc: Node, nodeId: string) {
-  let parentNode: Node | null = null;
-
-  const findNode: (node: Node) => Node | null = (node: Node) => {
-    if (node.id === nodeId) return parentNode;
-    if (node.type === NodeTypes.parent) parentNode = node;
-
-    for (const child of node.children) {
-      const found = findNode(child);
-      if (found) return found;
-    }
-
-    return null;
-  };
-
-  return findNode(doc);
 }
