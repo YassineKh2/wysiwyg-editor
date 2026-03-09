@@ -259,26 +259,32 @@ export function findPreviousNode(
   return findNode(doc);
 }
 
-export function findPreviousAdjacentNode(
-  doc: Node,
-  currentNodeId: string,
-  parentId: string,
-) {
-  const currentNodeDepth = findNodeDepth(doc, currentNodeId, 0);
+export function findPreviousAdjacentNode(doc: Node, currentNodeId: string) {
+  const nodesDepth = findNodesDepth(doc);
 
-  console.log(currentNodeDepth);
+  const currentNodeLevel = nodesDepth.find(
+    (node) => node.node.id === currentNodeId,
+  )?.level;
+
+  const nodeList = nodesDepth.filter((node) => node.level === currentNodeLevel);
+  const index = nodeList.findIndex((node) => node.node.id === currentNodeId);
+  const previousNode = nodeList[index - 1];
+
+  return previousNode.node;
 }
 
-export function findNodeDepth(node: Node, currentNodeId: string, max: number) {
-  if (currentNodeId === node.id) return max;
-  let localMax = 0;
-  node.children.forEach((child) => {
-    const depth = findNodeDepth(child, currentNodeId, max);
-    if (depth > localMax) localMax = depth;
-  });
+export function findNodesDepth(node: Node) {
+  const queue: { node: Node; level: number }[] = [];
 
-  max = 1 + localMax;
-  return max;
+  const calculateDepth = (node: Node, level: number) => {
+    queue.push({ node, level });
+    for (const child of node.children) {
+      calculateDepth(child, level + 1);
+    }
+    return queue;
+  };
+
+  return calculateDepth(node, 1);
 }
 
 // Only returns child nodes
@@ -336,12 +342,24 @@ export function mergeNodes(previousNode: Node, ParentNode: Node) {
   const node = structuredClone(previousNode);
   const nodeToMerge = structuredClone(ParentNode);
 
+  // If previousNode is a child node and they have the same styling
   if (
     node.type !== NodeTypes.parent &&
     nodeToMerge.children.length === 1 &&
     node.styling?.toString() === nodeToMerge.children[0].styling?.toString()
   ) {
-    node.content?.concat(nodeToMerge.content || "");
+    node.content?.concat(nodeToMerge.children[0].content || "");
+    return node;
+  }
+
+  // If PreviousNode Last element and CurrentNode same element have the same styling
+  if (
+    node.type === NodeTypes.parent &&
+    node.children[node.children.length - 1].styling?.toString() ===
+      nodeToMerge.children[0].styling?.toString()
+  ) {
+    const firstNode = nodeToMerge.children.pop();
+    node.content?.concat(firstNode?.content || "");
   }
 
   nodeToMerge?.children.forEach((child) => {

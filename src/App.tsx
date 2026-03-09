@@ -556,26 +556,15 @@ function App() {
     const curParentNode = findParentNode(docCopy, currentNode.id);
     if (!curParentNode) return;
 
-    const previousNode = findPreviousNode(
-      docCopy,
-      currentNode.id,
-      curParentNode.id,
-    );
+    const prevAdjNode = findPreviousAdjacentNode(docCopy, currentNode.id);
+    if (!prevAdjNode) return;
 
-    findPreviousAdjacentNode(docCopy, currentNode.id, curParentNode.id);
-    if (!previousNode) return;
-
-    const previousNodeCopy = structuredClone(previousNode);
-
-    const prevParentNode = findParentNode(docCopy, previousNode.id);
-    if (!prevParentNode || !curParentNode) return;
-
-    const cursorX = previousNodeCopy?.content?.length || 1;
-
-    // console.log(prevParentNode, curParentNode);
-
-    const newNode = mergeNodes(prevParentNode, curParentNode);
+    const newNode = mergeNodes(prevAdjNode, curParentNode);
+    console.log(newNode);
     // const updatedNode = updateNode(docCopy, previousNode, newNode);
+
+    // TODO Handle cursor placement correctly
+    const cursorX = prevAdjNode?.content?.length || 1;
 
     const newDoc = removeNode(docCopy, currentNode.id);
     if (!newDoc) return;
