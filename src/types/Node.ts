@@ -4,7 +4,7 @@ export interface Node {
   content: string | null;
   children: Node[];
   attributes?: AttributeTypes;
-  styling?: string[];
+  styling?: Styles[];
 }
 
 export enum NodeTypes {
@@ -13,6 +13,13 @@ export enum NodeTypes {
   image = "image",
   parent = "parent",
 }
+export enum Styles {
+  BOLD = "bold",
+  ITALIC = "italic",
+  SUP = "sup",
+  BULLET_LIST = "bullet-list",
+}
+
 export type AttributeTypes = {
   isText: boolean;
   isList: boolean;

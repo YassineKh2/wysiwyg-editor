@@ -554,13 +554,13 @@ function App() {
     const docCopy = structuredClone(doc);
 
     const curParentNode = findParentNode(docCopy, currentNode.id);
+    console.log(curParentNode);
     if (!curParentNode) return;
 
     const prevAdjNode = findPreviousAdjacentNode(docCopy, currentNode.id);
     if (!prevAdjNode) return;
 
     const newNode = mergeNodes(prevAdjNode, curParentNode);
-    console.log(newNode);
     // const updatedNode = updateNode(docCopy, previousNode, newNode);
 
     // TODO Handle cursor placement correctly

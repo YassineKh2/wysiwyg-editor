@@ -1,6 +1,6 @@
 import { type JSX } from "react";
 import type { Node } from "../types/Node.ts";
-import { NodeTypes } from "../types/Node.ts";
+import { NodeTypes, Styles } from "../types/Node.ts";
 
 export function parseDoc(
   children?: string | JSX.Element,
@@ -218,22 +218,24 @@ export function findChildPreviousNode(doc: Node, currentNodeId: string) {
   return findNode(doc);
 }
 
-export function findParentNode(doc: Node, nodeId: string) {
-  let parentNode: Node | null = null;
+export function findParentNode(doc: Node, currentNodeId: string) {
+  const nodesDepth = findNodesDepth(doc);
 
-  const findNode: (node: Node) => Node | null = (node: Node) => {
-    if (node.id === nodeId) return parentNode;
-    if (node.type === NodeTypes.parent) parentNode = node;
+  const currentNodeLevel =
+    nodesDepth.find((node) => node.node.id === currentNodeId)?.level || 1;
 
-    for (const child of node.children) {
-      const found = findNode(child);
-      if (found) return found;
-    }
+  const index = nodesDepth.findIndex((node) => node.node.id === currentNodeId);
 
-    return null;
-  };
+  const nodeList = nodesDepth.slice(index);
+  const parentList = nodeList.filter(
+    (node) =>
+      node.level === currentNodeLevel - 1 &&
+      node.node.type === NodeTypes.parent,
+  );
 
-  return findNode(doc);
+  const node = parentList.pop()?.node;
+
+  return node;
 }
 
 // Returns the Node while ignoring the currentNode Parent
@@ -268,9 +270,9 @@ export function findPreviousAdjacentNode(doc: Node, currentNodeId: string) {
 
   const nodeList = nodesDepth.filter((node) => node.level === currentNodeLevel);
   const index = nodeList.findIndex((node) => node.node.id === currentNodeId);
-  const previousNode = nodeList[index - 1];
+  const { node } = nodeList[index - 1];
 
-  return previousNode.node;
+  return node;
 }
 
 export function findNodesDepth(node: Node) {
@@ -341,26 +343,44 @@ TODO Documentation
 export function mergeNodes(previousNode: Node, ParentNode: Node) {
   const node = structuredClone(previousNode);
   const nodeToMerge = structuredClone(ParentNode);
+  const compareStyles = (Style1: string[] = [], Style2: string[] = []) => {
+    // Remove styles that have no visible effect
+    const filteredStyle1 = Style1?.filter(
+      (style) => style !== Styles.BULLET_LIST,
+    );
+    const filteredStyle2 = Style2?.filter(
+      (style) => style !== Styles.BULLET_LIST,
+    );
+
+    return filteredStyle1?.toString() === filteredStyle2?.toString();
+  };
 
   // If previousNode is a child node and they have the same styling
   if (
     node.type !== NodeTypes.parent &&
     nodeToMerge.children.length === 1 &&
-    node.styling?.toString() === nodeToMerge.children[0].styling?.toString()
+    compareStyles(node.styling, nodeToMerge.children[0].styling)
   ) {
-    node.content?.concat(nodeToMerge.children[0].content || "");
+    node.content = node.content?.concat(nodeToMerge.children[0].content!) || "";
     return node;
   }
 
   // If PreviousNode Last element and CurrentNode same element have the same styling
   if (
     node.type === NodeTypes.parent &&
-    node.children[node.children.length - 1].styling?.toString() ===
-      nodeToMerge.children[0].styling?.toString()
+    compareStyles(
+      node.children[node.children.length - 1].styling,
+      nodeToMerge.children[0].styling,
+    )
   ) {
-    const firstNode = nodeToMerge.children.pop();
-    node.content?.concat(firstNode?.content || "");
+    const firstNode = nodeToMerge.children[0];
+    const lastNode = node.children[node.children.length - 1];
+
+    lastNode.content = lastNode.content?.concat(firstNode?.content || "") || "";
   }
+
+  // Same Parent
+  if (node.id === nodeToMerge.id) return node;
 
   nodeToMerge?.children.forEach((child) => {
     node.children.push(child);
