@@ -226,7 +226,7 @@ export function findParentNode(doc: Node, currentNodeId: string) {
 
   const index = nodesDepth.findIndex((node) => node.node.id === currentNodeId);
 
-  const nodeList = nodesDepth.slice(index);
+  const nodeList = nodesDepth.slice(0, index);
   const parentList = nodeList.filter(
     (node) =>
       node.level === currentNodeLevel - 1 &&
@@ -343,6 +343,8 @@ TODO Documentation
 export function mergeNodes(previousNode: Node, ParentNode: Node) {
   const node = structuredClone(previousNode);
   const nodeToMerge = structuredClone(ParentNode);
+  console.log(node, nodeToMerge);
+
   const compareStyles = (Style1: string[] = [], Style2: string[] = []) => {
     // Remove styles that have no visible effect
     const filteredStyle1 = Style1?.filter(
