@@ -275,18 +275,24 @@ export function findPreviousAdjacentNode(doc: Node, currentNodeId: string) {
   return node;
 }
 
-export function findNodesDepth(node: Node) {
-  const queue: { node: Node; level: number }[] = [];
+export function findNodesDepth(root: Node) {
+  if (!root) return [];
 
-  const calculateDepth = (node: Node, level: number) => {
-    queue.push({ node, level });
+  const result: { node: Node; level: number }[] = [];
+
+  const queue: { node: Node; level: number }[] = [{ node: root, level: 1 }];
+
+  while (queue.length > 0) {
+    const { node, level } = queue.shift()!;
+
+    result.push({ node, level });
+
     for (const child of node.children) {
-      calculateDepth(child, level + 1);
+      queue.push({ node: child, level: level + 1 });
     }
-    return queue;
-  };
+  }
 
-  return calculateDepth(node, 1);
+  return result;
 }
 
 // Only returns child nodes
