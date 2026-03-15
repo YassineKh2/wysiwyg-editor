@@ -349,7 +349,6 @@ TODO Documentation
 export function mergeNodes(previousNode: Node, ParentNode: Node) {
   const node = structuredClone(previousNode);
   const nodeToMerge = structuredClone(ParentNode);
-  console.log(node, nodeToMerge);
 
   const compareStyles = (Style1: string[] = [], Style2: string[] = []) => {
     // Remove styles that have no visible effect
@@ -388,7 +387,9 @@ export function mergeNodes(previousNode: Node, ParentNode: Node) {
   }
 
   // Same Parent
-  if (node.id === nodeToMerge.id) return node;
+  const sameParent = nodeToMerge.children.find((child) => child.id === node.id);
+  // TODO Handle this case
+  if (sameParent) return node;
 
   nodeToMerge?.children.forEach((child) => {
     node.children.push(child);

@@ -13,7 +13,6 @@ import {
   removeCharFromNode,
   removeNode,
   updateNode,
-  findPreviousNode,
   findPreviousAdjacentNode,
 } from "./helpers/NodeHelpers.tsx";
 import type { JSX } from "react";
