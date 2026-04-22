@@ -268,8 +268,25 @@ export function findPreviousAdjacentNode(doc: Node, currentNodeId: string) {
     (node) => node.node.id === currentNodeId,
   )?.level;
 
-  const nodeList = nodesDepth.filter((node) => node.level === currentNodeLevel);
-  const index = nodeList.findIndex((node) => node.node.id === currentNodeId);
+  if (!currentNodeLevel) {
+    console.warn("findPreviousAdjacentNode : Current Node Level not found");
+    return;
+  }
+
+  let nodeList = nodesDepth.filter((node) => node.level === currentNodeLevel);
+  let index = nodeList.findIndex((node) => node.node.id === currentNodeId);
+
+  // Makes sure that element isn't the last adjacent node
+  if (index !== 0) {
+    const { node } = nodeList[index - 1];
+    return node;
+  }
+
+  //TODO Makes this a while loop
+  nodeList = nodesDepth.filter((node) => node.level === currentNodeLevel - 1);
+  const parent = findParentNode(doc, currentNodeId);
+  index = nodeList.findIndex((node) => node.node.id === parent?.id);
+
   const { node } = nodeList[index - 1];
 
   return node;
