@@ -559,7 +559,7 @@ function App() {
     if (!prevAdjNode) return;
 
     const newNode = mergeNodes(prevAdjNode, curParentNode);
-    // const updatedNode = updateNode(docCopy, previousNode, newNode);
+    //= const updatedNode = updateNode(docCopy, previousNode, newNode);
 
     // TODO Handle cursor placement correctly
     const cursorX = prevAdjNode?.content?.length || 1;

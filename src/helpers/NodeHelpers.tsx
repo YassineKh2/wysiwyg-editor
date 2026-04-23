@@ -385,7 +385,13 @@ export function mergeNodes(previousNode: Node, ParentNode: Node) {
     nodeToMerge.children.length === 1 &&
     compareStyles(node.styling, nodeToMerge.children[0].styling)
   ) {
-    node.content = node.content?.concat(nodeToMerge.children[0].content!) || "";
+    const content = node.content?.concat(nodeToMerge.children[0].content!);
+    if (!content) {
+      console.warn("mergeNodes: Error merging");
+      return;
+    }
+
+    node.content = content;
     return node;
   }
 
