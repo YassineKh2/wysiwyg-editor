@@ -385,7 +385,9 @@ export function mergeNodes(previousNode: Node, ParentNode: Node) {
     nodeToMerge.children.length === 1 &&
     compareStyles(node.styling, nodeToMerge.children[0].styling)
   ) {
-    const content = node.content?.concat(nodeToMerge.children[0].content!);
+    const contentToMerge = nodeToMerge.children[0].content || "";
+    const content = node.content?.concat(contentToMerge);
+
     if (!content) {
       console.warn("mergeNodes: Error merging");
       return;
