@@ -559,6 +559,7 @@ function App() {
     if (!prevAdjNode) return;
 
     const newNode = mergeNodes(prevAdjNode, curParentNode);
+    console.log(newNode);
     //= const updatedNode = updateNode(docCopy, previousNode, newNode);
 
     // TODO Handle cursor placement correctly
@@ -567,23 +568,23 @@ function App() {
     const newDoc = removeNode(docCopy, currentNode.id);
     if (!newDoc) return;
 
-    setEditor((prev) => ({
-      ...prev,
-      doc: newDoc[0],
-      cursor: { ...prev.cursor, x: cursorX - 1, anchorX: cursorX - 1 },
-      currentNode: newNode,
-    }));
+    // setEditor((prev) => ({
+    //   ...prev,
+    //   doc: newDoc[0],
+    //   cursor: { ...prev.cursor, x: cursorX - 1, anchorX: cursorX - 1 },
+    //   currentNode: newNode,
+    // }));
 
-    const result = documentResolver(newDoc[0], true);
-    setEditorView(result);
+    // const result = documentResolver(newDoc[0], true);
+    // setEditorView(result);
 
-    const char = previousNode.content ? previousNode.content[cursorX - 1] : "";
+    // const char = previousNode.content ? previousNode.content[cursorX - 1] : "";
 
-    caretMovement.current = {
-      char,
-      direction: Keys.ArrowLeft,
-      styling: currentNode.styling,
-    };
+    // caretMovement.current = {
+    //   char,
+    //   direction: Keys.ArrowLeft,
+    //   styling: currentNode.styling,
+    // };
   }
 
   return (
