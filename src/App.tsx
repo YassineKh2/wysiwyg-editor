@@ -558,9 +558,15 @@ function App() {
     const prevAdjNode = findPreviousAdjacentNode(docCopy, currentNode.id);
     if (!prevAdjNode) return;
 
-    const newNode = mergeNodes(prevAdjNode, curParentNode);
+    const newNode = mergeNodes(prevAdjNode, curParentNode, currentNode.id);
+
+    if (!newNode) {
+      console.warn("mergeNodes: Error merging");
+      return;
+    }
+
     console.log(newNode);
-    //= const updatedNode = updateNode(docCopy, previousNode, newNode);
+    const updatedNode = updateNode(docCopy, previousNode, newNode);
 
     // TODO Handle cursor placement correctly
     const cursorX = prevAdjNode?.content?.length || 1;

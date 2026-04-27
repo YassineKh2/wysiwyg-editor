@@ -397,10 +397,7 @@ export function mergeNodes(
     const contentToMerge = nodeToMerge.children[0].content || "";
     const content = node.content?.concat(contentToMerge);
 
-    if (!content) {
-      console.warn("mergeNodes: Error merging");
-      return;
-    }
+    if (!content) return;
 
     node.content = content;
     return node;
@@ -434,16 +431,13 @@ export function mergeNodes(
     sameParent &&
     compareStyles(
       node.children[node.children.length - 1].styling,
-      nodeToMerge.children[0].styling,
+      nodeToMerge.children.find((child) => child.id === nodeId)?.styling,
     )
   ) {
     const foundNode = nodeToMerge.children.find((child) => child.id === nodeId);
     const lastNode = node.children[node.children.length - 1];
 
-    if (!foundNode) {
-      console.warn("mergeNodes : No Node Found !");
-      return;
-    }
+    if (!foundNode) return;
 
     const foundNodeContent = foundNode.content || "";
     const lastNodeContent = lastNode.content?.concat(foundNodeContent) || "";
@@ -451,11 +445,9 @@ export function mergeNodes(
     if (!lastNodeContent) console.warn("mergeNodes : No content to merge");
 
     if (lastNode) lastNode.content = lastNodeContent;
-  }
 
-  nodeToMerge?.children.forEach((child) => {
-    node.children.push(child);
-  });
+    node.children[node.children.length - 1] = lastNode;
+  }
 
   return node;
 }
