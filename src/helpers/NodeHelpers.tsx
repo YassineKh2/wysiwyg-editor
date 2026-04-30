@@ -363,7 +363,7 @@ export function getCurrentNode(
 }
 
 /* Merges 2 Nodes into 1 node
-TODO Documentation
+TODO Documentation & Refactor function into smaller helper functions
 @Param previousNode: The previous node that we will merge in could be child node or parent
 @Param ParentNode: The parent of the node to be merged
 @Param nodeId: The Id of the node to be merged
@@ -372,9 +372,10 @@ export function mergeNodes(
   previousNode: Node,
   ParentNode: Node,
   nodeId: string,
-) {
+): { newNode: Node; deleteParent: boolean } | undefined {
   const node = structuredClone(previousNode);
   const nodeToMerge = structuredClone(ParentNode);
+  const sameParent = nodeToMerge.children.find((child) => child.id === node.id);
 
   const compareStyles = (Style1: string[] = [], Style2: string[] = []) => {
     // Remove styles that have no visible effect
@@ -388,7 +389,7 @@ export function mergeNodes(
     return filteredStyle1?.toString() === filteredStyle2?.toString();
   };
 
-  // If previousNode is a child node and they have the same styling
+  // If previousNode is a child node and they have the same styling and the node to merge has single child
   if (
     node.type !== NodeTypes.parent &&
     nodeToMerge.children.length === 1 &&
@@ -400,10 +401,8 @@ export function mergeNodes(
     if (!content) return;
 
     node.content = content;
-    return node;
+    return { newNode: node, deleteParent: false };
   }
-
-  const sameParent = nodeToMerge.children.find((child) => child.id === node.id);
 
   // If PreviousNode Last element and CurrentNode same element have the same styling and don't have the same parent
   if (
@@ -423,6 +422,8 @@ export function mergeNodes(
     if (!lastNodeContent) console.warn("mergeNodes : No content to merge");
 
     lastNode.content = lastNodeContent;
+
+    return { newNode: node, deleteParent: false };
   }
 
   // If PreviousNode Last element and CurrentNode same element have the same styling and have the same parent
@@ -447,7 +448,24 @@ export function mergeNodes(
     if (lastNode) lastNode.content = lastNodeContent;
 
     node.children[node.children.length - 1] = lastNode;
+
+    return { newNode: node, deleteParent: false };
   }
 
-  return node;
+  // If previousNode is a child node and they have the same styling and the node to merge has multiple childs
+  if (
+    node.type !== NodeTypes.parent &&
+    compareStyles(node.styling, nodeToMerge.children[0].styling)
+  ) {
+    const newId = Math.random().toString(36).substring(2, 15);
+    const firstNodeContent = node.content || "";
+    const lastNodeContent = firstNodeContent.concat(
+      nodeToMerge.children[0].content || "",
+    );
+
+    nodeToMerge.children[0].content = lastNodeContent;
+    nodeToMerge.id = newId;
+
+    return { newNode: nodeToMerge, deleteParent: true };
+  }
 }

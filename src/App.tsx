@@ -22,6 +22,7 @@ import { Keys } from "./types/Keys.ts";
 import { NodeTypes, type AttributeTypes } from "./types/Node.ts";
 import { computeNextCaret } from "./helpers/CaretHelper.ts";
 import type { CaretType, CaretMovementType } from "./types/Caret.ts";
+import type { Node } from "./types/Node.ts";
 
 const editorDefault: Editor = {
   doc: {
@@ -558,31 +559,35 @@ function App() {
     const prevAdjNode = findPreviousAdjacentNode(docCopy, currentNode.id);
     if (!prevAdjNode) return;
 
-    const newNode = mergeNodes(prevAdjNode, curParentNode, currentNode.id);
-
-    if (!newNode) {
+    const mergeResult = mergeNodes(prevAdjNode, curParentNode, currentNode.id);
+    if (!mergeResult) {
       console.warn("mergeNodes: Error merging");
       return;
     }
 
-    console.log(newNode);
-    const updatedNode = updateNode(docCopy, previousNode, newNode);
+    const { newNode, deleteParent } = mergeResult;
+
+    const updatedDoc = updateNode(docCopy, prevAdjNode, newNode);
+
+    console.log(updatedDoc);
 
     // TODO Handle cursor placement correctly
     const cursorX = prevAdjNode?.content?.length || 1;
+    let newDoc: Node[] | null;
 
-    const newDoc = removeNode(docCopy, currentNode.id);
+    if (deleteParent) newDoc = removeNode(updatedDoc, curParentNode.id);
+    else newDoc = removeNode(updatedDoc, currentNode.id);
     if (!newDoc) return;
 
-    // setEditor((prev) => ({
-    //   ...prev,
-    //   doc: newDoc[0],
-    //   cursor: { ...prev.cursor, x: cursorX - 1, anchorX: cursorX - 1 },
-    //   currentNode: newNode,
-    // }));
+    setEditor((prev) => ({
+      ...prev,
+      doc: newDoc[0],
+      cursor: { ...prev.cursor, x: cursorX - 1, anchorX: cursorX - 1 },
+      currentNode: newNode,
+    }));
 
-    // const result = documentResolver(newDoc[0], true);
-    // setEditorView(result);
+    const result = documentResolver(newDoc[0], true);
+    setEditorView(result);
 
     // const char = previousNode.content ? previousNode.content[cursorX - 1] : "";
 
