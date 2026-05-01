@@ -158,7 +158,7 @@ export function findNodeInDomFromId(id?: string) {
   return document.getElementById(id);
 }
 
-export function removeNode(doc: Node, id?: string) {
+export function removeNode(doc: Node, id: string) {
   if (doc.id === id) {
     if (doc.children?.length) return doc.children;
     else return null;

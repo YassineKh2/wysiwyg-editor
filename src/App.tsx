@@ -19,7 +19,7 @@ import type { JSX } from "react";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useHotkeys } from "react-hotkeys-hook";
 import { Keys } from "./types/Keys.ts";
-import { NodeTypes, type AttributeTypes } from "./types/Node.ts";
+import { NodeTypes, Styles, type AttributeTypes } from "./types/Node.ts";
 import { computeNextCaret } from "./helpers/CaretHelper.ts";
 import type { CaretType, CaretMovementType } from "./types/Caret.ts";
 import type { Node } from "./types/Node.ts";
@@ -46,7 +46,7 @@ const editorDefault: Editor = {
             type: NodeTypes.parapagh,
             content: "is bold ",
             children: [],
-            styling: ["bold"],
+            styling: [Styles.BOLD],
           },
           {
             id: "",
@@ -67,7 +67,7 @@ const editorDefault: Editor = {
             type: NodeTypes.parapagh,
             content: "hi i am child number 1",
             children: [],
-            styling: ["bullet-list"],
+            styling: [Styles.BULLET_LIST],
           },
           {
             id: "",
@@ -85,21 +85,21 @@ const editorDefault: Editor = {
                 type: NodeTypes.parapagh,
                 content: "i am",
                 children: [],
-                styling: ["bold"],
+                styling: [Styles.BOLD],
               },
               {
                 id: "",
                 type: NodeTypes.parapagh,
                 content: " an italic Textu ",
                 children: [],
-                styling: ["italic"],
+                styling: [Styles.ITALIC],
               },
               {
                 id: "",
                 type: NodeTypes.parapagh,
                 content: " an Boldeuuu and italic Textu and suuuuup",
                 children: [],
-                styling: ["bold", "sup", "italic"],
+                styling: [Styles.BOLD, Styles.ITALIC, Styles.SUP],
               },
               {
                 id: "",
@@ -108,14 +108,14 @@ const editorDefault: Editor = {
                 children: [],
               },
             ],
-            styling: ["bullet-list"],
+            styling: [Styles.BULLET_LIST],
             attributes: { isChildList: true } as AttributeTypes,
           },
           {
             id: "",
             type: NodeTypes.parapagh,
             content: "hi i am child number 3",
-            styling: ["bullet-list"],
+            styling: [Styles.BULLET_LIST],
             children: [],
           },
         ],
@@ -151,7 +151,7 @@ const editorDefault: Editor = {
             type: NodeTypes.parapagh,
             content: "bold p2 ",
             children: [],
-            styling: ["bold"],
+            styling: [Styles.BOLD],
           },
           {
             id: "",
@@ -569,14 +569,14 @@ function App() {
 
     const updatedDoc = updateNode(docCopy, prevAdjNode, newNode);
 
-    console.log(updatedDoc);
-
     // TODO Handle cursor placement correctly
     const cursorX = prevAdjNode?.content?.length || 1;
     let newDoc: Node[] | null;
 
     if (deleteParent) newDoc = removeNode(updatedDoc, curParentNode.id);
     else newDoc = removeNode(updatedDoc, currentNode.id);
+
+    console.log(newDoc);
     if (!newDoc) return;
 
     setEditor((prev) => ({
